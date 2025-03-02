@@ -1,0 +1,41 @@
+[package]
+name = "rutile_r2r"
+version = "0.1.0"
+edition = "2024"
+authors = ["David Doose <david.doose@onera.fr>"]
+license = "LGPL-3.0-only"
+description = "Simple ROS2 r2r binding"
+repository = "https://github.com/DavidD12/rutile_r2r"
+keywords = ["RSO2", "r2r"]
+
+
+[env]
+IDL_PACKAGE_FILTER = "std_msgs,example_interfaces"
+
+[dependencies]
+futures = "0.3.31"
+r2r = "0.9.4"
+
+[lib]
+name = "rutile"
+path = "src/lib.rs"
+
+[[bin]]
+name = "wall_timer"
+path = "bin/wall_timer.rs"
+
+[[bin]]
+name = "publisher"
+path = "bin/publisher.rs"
+
+[[bin]]
+name = "subscriber"
+path = "bin/subscriber.rs"
+
+[[bin]]
+name = "service"
+path = "bin/service.rs"
+
+[[bin]]
+name = "client"
+path = "bin/client.rs"
