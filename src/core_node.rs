@@ -29,6 +29,10 @@ impl CoreNode {
         Ok(node)
     }
 
+    pub fn r2r_node(&self) -> &Arc<Mutex<r2r::Node>> {
+        &self.r2r_node_mutex
+    }
+
     pub fn get_parameter<P>(&self, name: &str) -> r2r::Result<P>
     where
         r2r::ParameterValue: TryInto<P, Error = r2r::WrongParameterType>,
