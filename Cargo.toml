@@ -1,6 +1,6 @@
 [package]
 name = "rutile_r2r"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
@@ -21,6 +21,10 @@ name = "rutile"
 path = "src/lib.rs"
 
 [[bin]]
+name = "main"
+path = "bin/main.rs"
+
+[[bin]]
 name = "wall_timer"
 path = "bin/wall_timer.rs"
 
@@ -39,3 +43,7 @@ path = "bin/service.rs"
 [[bin]]
 name = "client"
 path = "bin/client.rs"
+
+[[bin]]
+name = "core_node"
+path = "bin/core_node.rs"

@@ -4,7 +4,7 @@ pub use super::*;
 
 pub enum Client<T, S>
 where
-    T: Data,
+    T: 'static,
     S: r2r::WrappedServiceTypeSupport,
 {
     Empty,
@@ -20,7 +20,7 @@ where
 
 impl<T, S> Default for Client<T, S>
 where
-    T: Data,
+    T: 'static,
     S: r2r::WrappedServiceTypeSupport,
 {
     fn default() -> Self {
@@ -30,7 +30,7 @@ where
 
 impl<T, S> Client<T, S>
 where
-    T: Data,
+    T: 'static,
     S: r2r::WrappedServiceTypeSupport + 'static,
 {
     pub fn call(&self, request: S::Request) -> Result<()> {

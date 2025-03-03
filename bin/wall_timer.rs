@@ -5,14 +5,6 @@ pub struct MyData {
     count: i32,
 }
 
-impl MyData {
-    pub fn timer_callback(&mut self) -> Result<()> {
-        self.count += 1;
-        println!("count = {}", self.count);
-        Ok(())
-    }
-}
-
 impl Data for MyData {
     fn initialize(&mut self, _: &Node<Self>) -> Result<()> {
         Ok(())
