@@ -52,6 +52,16 @@ where
         node.get_parameter::<P>(name)
     }
 
+    pub fn get_parameter_with_default<P>(&self, name: &str, default: P) -> r2r::Result<P>
+    where
+        r2r::ParameterValue: TryInto<Option<P>, Error = r2r::WrongParameterType>,
+    {
+        let node = self.r2r_node_mutex.lock().unwrap();
+        let opt: Option<P> = node.get_parameter::<Option<P>>(name)?;
+
+        Ok(opt.unwrap_or(default))
+    }
+
     pub fn create_wall_timer(
         &self,
         period: std::time::Duration,
