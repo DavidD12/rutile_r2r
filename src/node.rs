@@ -49,7 +49,7 @@ where
         r2r::ParameterValue: TryInto<P, Error = r2r::WrongParameterType>,
     {
         let node = self.r2r_node_mutex.lock().unwrap();
-        node.get_parameter(name)
+        node.get_parameter::<P>(name)
     }
 
     pub fn create_wall_timer(
