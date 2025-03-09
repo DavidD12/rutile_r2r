@@ -18,6 +18,16 @@ where
     },
 }
 
+impl<T, S> std::default::Default for Client<T, S>
+where
+    T: 'static,
+    S: r2r::WrappedServiceTypeSupport,
+{
+    fn default() -> Self {
+        Self::Empty
+    }
+}
+
 impl<T, S> Client<T, S>
 where
     T: 'static,
