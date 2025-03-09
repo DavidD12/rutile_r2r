@@ -21,7 +21,7 @@ pub trait NodeInterface {
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
-    ) -> Result<r2r::Publisher<M>>
+    ) -> Result<Publisher<M>>
     where
         M: r2r::WrappedTypesupport;
 

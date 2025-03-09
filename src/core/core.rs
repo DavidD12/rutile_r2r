@@ -1,4 +1,4 @@
-use super::{Client, NodeInterface};
+use super::{Client, NodeInterface, Publisher};
 pub use crate::Result;
 pub use std::sync::{Arc, Mutex};
 
@@ -87,13 +87,14 @@ impl Core {
         self_mutex: Arc<Mutex<Self>>,
         topic: &str,
         qos_profile: r2r::QosProfile,
-    ) -> Result<r2r::Publisher<M>>
+    ) -> Result<Publisher<M>>
     where
         M: r2r::WrappedTypesupport,
     {
         let mut this = self_mutex.lock().unwrap();
         let r2r_publisher = this.r2r_node.create_publisher(topic, qos_profile)?;
-        Ok(r2r_publisher)
+        let publisher = Publisher::Defined { r2r_publisher };
+        Ok(publisher)
     }
 
     pub fn create_subscription<T, M>(
@@ -220,7 +221,7 @@ impl Core {
                     .create_client::<S>(service_name, qos_profile)?,
             )
         };
-        let client = Client {
+        let client = Client::Defined {
             name: service_name.to_string(),
             core_mutex: self_mutex.clone(),
             r2r_client,
@@ -255,11 +256,7 @@ impl NodeInterface for Arc<Mutex<Core>> {
         Core::create_wall_timer(self.clone(), data_mutex, period, callback)
     }
 
-    fn create_publisher<M>(
-        &self,
-        topic: &str,
-        qos_profile: r2r::QosProfile,
-    ) -> Result<r2r::Publisher<M>>
+    fn create_publisher<M>(&self, topic: &str, qos_profile: r2r::QosProfile) -> Result<Publisher<M>>
     where
         M: r2r::WrappedTypesupport,
     {

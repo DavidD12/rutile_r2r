@@ -7,6 +7,9 @@ pub use node::*;
 pub mod client;
 pub use client::*;
 
+pub mod publisher;
+pub use publisher::*;
+
 pub mod interface;
 pub use interface::*;
 
