@@ -1,24 +1,26 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
 use rutile::*;
 
-#[derive(Default)]
 pub struct MainData {
+    pub node_mutex: Arc<Mutex<CoreNode>>,
     pub a: i64,
     pub b: i64,
     pub sub_data_mutex: Arc<Mutex<SubData>>,
 }
 
 impl MainData {
-    pub fn new() -> Self {
+    pub fn new(node_mutex: Arc<Mutex<CoreNode>>) -> Self {
         Self {
+            node_mutex: node_mutex.clone(),
             a: 0,
             b: 0,
             sub_data_mutex: Arc::new(Mutex::new(SubData::default())),
         }
     }
 
-    pub fn initialize(&mut self, node: &CoreNode) -> Result<()> {
-        SubData::initialize(self.sub_data_mutex.clone(), node)
+    pub fn initialize(&mut self) -> Result<()> {
+        // SubData::initialize(self.sub_data_mutex.clone(), node)
+        Ok(())
     }
 }
 
@@ -28,20 +30,20 @@ pub struct SubData {
 }
 
 impl SubData {
-    fn initialize(self_mutex: Arc<Mutex<Self>>, node: &CoreNode) -> Result<()> {
-        //
-        let client = node.create_client::<Self, AddTwoInts::Service>(
-            self_mutex.clone(),
-            "/add",
-            QosProfile::default(),
-            client_callback,
-        )?;
+    // fn initialize(self_mutex: Arc<Mutex<Self>>, node: &CoreNode) -> Result<()> {
+    //     //
+    //     let client = node.create_client::<Self, AddTwoInts::Service>(
+    //         self_mutex.clone(),
+    //         "/add",
+    //         QosProfile::default(),
+    //         client_callback,
+    //     )?;
 
-        let mut this = self_mutex.lock().unwrap();
-        this.client = client;
+    //     let mut this = self_mutex.lock().unwrap();
+    //     this.client = client;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 fn client_callback(
@@ -72,16 +74,17 @@ fn timer_callback(_: Arc<Mutex<r2r::Node>>, data_mutex: Arc<Mutex<MainData>>) ->
 }
 
 fn main() -> Result<()> {
-    let mut node = CoreNode::create("wall_timer_node", "")?;
+    // let node = CoreNode::create("wall_timer_node", "")?;
+    // let node_mutex = Arc::new(Mutex::new(node));
 
-    let mut data = MainData::default();
-    data.initialize(&node)?;
+    // let mut data = MainData::default();
+    // data.initialize(&node)?;
 
-    let data = Arc::new(Mutex::new(data));
+    // let data = Arc::new(Mutex::new(data));
 
-    node.create_wall_timer(data, std::time::Duration::from_millis(1000), timer_callback)?;
+    // node.create_wall_timer(data, std::time::Duration::from_millis(1000), timer_callback)?;
 
-    node.spin();
+    // node.spin();
 
     Ok(())
 }

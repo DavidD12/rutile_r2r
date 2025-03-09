@@ -1,36 +1,18 @@
-use std::rc::Rc;
+use super::{Client, NodeInterface};
+pub use crate::Result;
 pub use std::sync::{Arc, Mutex};
 
-pub use super::*;
-use futures::executor::{LocalPool, LocalSpawner};
-use futures::task::LocalSpawnExt;
-use futures::{StreamExt, future};
+use futures::{StreamExt, executor::LocalSpawner, future, task::LocalSpawnExt};
 
-pub struct CoreNode {
+pub struct Core {
     pub(crate) r2r_node: r2r::Node,
-    pub(crate) pool: LocalPool,
-    pub(crate) spawner: Rc<LocalSpawner>,
+    pub(crate) spawner: LocalSpawner,
 }
 
-impl CoreNode {
-    pub fn create(name: &str, namespace: &str) -> Result<Self> {
-        let ctx = r2r::Context::create()?;
-        let r2r_node = r2r::Node::create(ctx, name, namespace)?;
-        //
-        let pool = LocalPool::new();
-        let spawner = pool.spawner();
-        let spawner = Rc::new(spawner);
-        //
-        let node = Self {
-            r2r_node,
-            pool,
-            spawner,
-        };
-        Ok(node)
-    }
-
-    pub fn r2r_node(&self) -> &r2r::Node {
-        &self.r2r_node
+impl Core {
+    pub fn logger(self_mutex: Arc<Mutex<Self>>) -> String {
+        let this = self_mutex.lock().unwrap();
+        this.r2r_node.logger().to_string()
     }
 
     pub fn get_parameter<P>(self_mutex: Arc<Mutex<Self>>, name: &str) -> r2r::Result<P>
@@ -105,13 +87,13 @@ impl CoreNode {
         self_mutex: Arc<Mutex<Self>>,
         topic: &str,
         qos_profile: r2r::QosProfile,
-    ) -> Result<Publisher<M>>
+    ) -> Result<r2r::Publisher<M>>
     where
         M: r2r::WrappedTypesupport,
     {
         let mut this = self_mutex.lock().unwrap();
         let r2r_publisher = this.r2r_node.create_publisher(topic, qos_profile)?;
-        Ok(Publisher::Defined { r2r_publisher })
+        Ok(r2r_publisher)
     }
 
     pub fn create_subscription<T, M>(
@@ -220,25 +202,6 @@ impl CoreNode {
         Ok(())
     }
 
-    // pub fn create_client_sync<S>(
-    //     &self,
-    //     service_name: &str,
-    //     qos_profile: r2r::QosProfile,
-    // ) -> Result<ClientSync<S>>
-    // where
-    //     S: 'static + r2r::WrappedServiceTypeSupport,
-    // {
-    //     let mut rnode = self.r2r_node_mutex.lock().unwrap();
-
-    //     let r2r_client = Arc::new(rnode.create_client::<S>(service_name, qos_profile)?);
-    //     let client = ClientSync::Defined {
-    //         name: service_name.to_string(),
-    //         r2r_client,
-    //         spawner: self.spawner.clone(),
-    //     };
-    //     Ok(client)
-    // }
-
     pub fn create_client<T, S>(
         self_mutex: Arc<Mutex<Self>>,
         data_mutex: Arc<Mutex<T>>,
@@ -257,25 +220,103 @@ impl CoreNode {
                     .create_client::<S>(service_name, qos_profile)?,
             )
         };
-        let client = Client::Defined {
+        let client = Client {
             name: service_name.to_string(),
-            node_mutex: self_mutex.clone(),
+            core_mutex: self_mutex.clone(),
             r2r_client,
             callback: Arc::new(callback),
             data_mutex: data_mutex.clone(),
         };
         Ok(client)
     }
+}
 
-    pub fn spin(self_mutex: Arc<Mutex<Self>>) {
-        loop {
-            {
-                let mut this = self_mutex.lock().unwrap();
-                this.r2r_node
-                    .spin_once(std::time::Duration::from_millis(10_000));
-            }
-            // self.pool.run_until_stalled();
-            todo!()
-        }
+impl NodeInterface for Arc<Mutex<Core>> {
+    fn logger(&self) -> String {
+        Core::logger(self.clone())
+    }
+
+    fn get_parameter<P>(&self, name: &str) -> r2r::Result<P>
+    where
+        r2r::ParameterValue: TryInto<P, Error = r2r::WrongParameterType>,
+    {
+        Core::get_parameter(self.clone(), name)
+    }
+
+    fn create_wall_timer<T>(
+        &self,
+        data_mutex: Arc<Mutex<T>>,
+        period: std::time::Duration,
+        callback: fn(Arc<Mutex<Core>>, Arc<Mutex<T>>) -> Result<()>,
+    ) -> Result<()>
+    where
+        T: 'static,
+    {
+        Core::create_wall_timer(self.clone(), data_mutex, period, callback)
+    }
+
+    fn create_publisher<M>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+    ) -> Result<r2r::Publisher<M>>
+    where
+        M: r2r::WrappedTypesupport,
+    {
+        Core::create_publisher(self.clone(), topic, qos_profile)
+    }
+
+    fn create_subscription<T, M>(
+        &self,
+        data_mutex: Arc<Mutex<T>>,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: fn(Arc<Mutex<Core>>, Arc<Mutex<T>>, &M) -> Result<()>,
+    ) -> Result<()>
+    where
+        T: 'static,
+        M: 'static + r2r::WrappedTypesupport,
+    {
+        Core::create_subscription(self.clone(), data_mutex, topic, qos_profile, callback)
+    }
+
+    fn create_service<T, S>(
+        &self,
+        data_mutex: Arc<Mutex<T>>,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: fn(Arc<Mutex<Core>>, Arc<Mutex<T>>, &S::Request) -> Result<S::Response>,
+    ) -> Result<()>
+    where
+        T: 'static,
+        S: 'static + r2r::WrappedServiceTypeSupport,
+    {
+        Core::create_service::<T, S>(
+            self.clone(),
+            data_mutex,
+            service_name,
+            qos_profile,
+            callback,
+        )
+    }
+
+    fn create_client<T, S>(
+        &self,
+        data_mutex: Arc<Mutex<T>>,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: fn(Arc<Mutex<Core>>, Arc<Mutex<T>>, &S::Response) -> Result<()>,
+    ) -> Result<Client<T, S>>
+    where
+        T: 'static,
+        S: 'static + r2r::WrappedServiceTypeSupport,
+    {
+        Core::create_client(
+            self.clone(),
+            data_mutex,
+            service_name,
+            qos_profile,
+            callback,
+        )
     }
 }

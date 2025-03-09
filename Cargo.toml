@@ -1,13 +1,12 @@
 [package]
 name = "rutile_r2r"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
 description = "Simple ROS2 r2r binding"
 repository = "https://github.com/DavidD12/rutile_r2r"
 keywords = ["RSO2", "r2r"]
-
 
 [env]
 IDL_PACKAGE_FILTER = "std_msgs,example_interfaces"
@@ -48,6 +47,6 @@ path = "bin/client.rs"
 # name = "client_sync"
 # path = "bin/client_sync.rs"
 
-[[bin]]
-name = "core_node"
-path = "bin/core_node.rs"
+# [[bin]]
+# name = "core_node"
+# path = "bin/core_node.rs"
