@@ -9,7 +9,7 @@ pub struct Node<T>
 where
     T: Data,
 {
-    pub(crate) data_mutex: Arc<Mutex<T>>,
+    pub data_mutex: Arc<Mutex<T>>,
     pub(crate) r2r_node_mutex: Arc<Mutex<r2r::Node>>,
     pub(crate) pool: LocalPool,
     pub(crate) spawner: Arc<LocalSpawner>,
@@ -201,19 +201,38 @@ where
         Ok(())
     }
 
+    // pub fn create_client_sync<S>(
+    //     &self,
+    //     service_name: &str,
+    //     qos_profile: r2r::QosProfile,
+    // ) -> Result<ClientSync<S>>
+    // where
+    //     S: 'static + r2r::WrappedServiceTypeSupport,
+    // {
+    //     let mut rnode = self.r2r_node_mutex.lock().unwrap();
+
+    //     let r2r_client = Arc::new(rnode.create_client::<S>(service_name, qos_profile)?);
+    //     let client = ClientSync::Defined {
+    //         name: service_name.to_string(),
+    //         r2r_client,
+    //         spawner: self.spawner.clone(),
+    //     };
+    //     Ok(client)
+    // }
+
     pub fn create_client<S>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
         callback: fn(Arc<Mutex<r2r::Node>>, Arc<Mutex<T>>, &S::Response) -> Result<()>,
-    ) -> Result<Client<T, S>>
+    ) -> Result<ClientAsync<T, S>>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
     {
         let mut rnode = self.r2r_node_mutex.lock().unwrap();
 
         let r2r_client = Arc::new(rnode.create_client::<S>(service_name, qos_profile)?);
-        let client = Client::Defined {
+        let client = ClientAsync::Defined {
             name: service_name.to_string(),
             r2r_node_mutex: self.r2r_node_mutex.clone(),
             r2r_client,

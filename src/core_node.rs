@@ -41,6 +41,16 @@ impl CoreNode {
         node.get_parameter(name)
     }
 
+    pub fn get_parameter_with_default<P>(&self, name: &str, default: P) -> r2r::Result<P>
+    where
+        r2r::ParameterValue: TryInto<Option<P>, Error = r2r::WrongParameterType>,
+    {
+        let node = self.r2r_node_mutex.lock().unwrap();
+        let opt: Option<P> = node.get_parameter::<Option<P>>(name)?;
+
+        Ok(opt.unwrap_or(default))
+    }
+
     pub fn create_wall_timer<T>(
         &self,
         data_mutex: Arc<Mutex<T>>,
@@ -188,13 +198,32 @@ impl CoreNode {
         Ok(())
     }
 
+    // pub fn create_client_sync<S>(
+    //     &self,
+    //     service_name: &str,
+    //     qos_profile: r2r::QosProfile,
+    // ) -> Result<ClientSync<S>>
+    // where
+    //     S: 'static + r2r::WrappedServiceTypeSupport,
+    // {
+    //     let mut rnode = self.r2r_node_mutex.lock().unwrap();
+
+    //     let r2r_client = Arc::new(rnode.create_client::<S>(service_name, qos_profile)?);
+    //     let client = ClientSync::Defined {
+    //         name: service_name.to_string(),
+    //         r2r_client,
+    //         spawner: self.spawner.clone(),
+    //     };
+    //     Ok(client)
+    // }
+
     pub fn create_client<T, S>(
         &self,
         data_mutex: Arc<Mutex<T>>,
         service_name: &str,
         qos_profile: r2r::QosProfile,
         callback: fn(Arc<Mutex<r2r::Node>>, Arc<Mutex<T>>, &S::Response) -> Result<()>,
-    ) -> Result<Client<T, S>>
+    ) -> Result<ClientAsync<T, S>>
     where
         T: 'static,
         S: 'static + r2r::WrappedServiceTypeSupport,
@@ -202,7 +231,7 @@ impl CoreNode {
         let mut rnode = self.r2r_node_mutex.lock().unwrap();
 
         let r2r_client = Arc::new(rnode.create_client::<S>(service_name, qos_profile)?);
-        let client = Client::Defined {
+        let client = ClientAsync::Defined {
             name: service_name.to_string(),
             r2r_node_mutex: self.r2r_node_mutex.clone(),
             r2r_client,

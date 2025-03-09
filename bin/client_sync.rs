@@ -5,7 +5,7 @@ use rutile::*;
 pub struct MyData {
     pub a: i64,
     pub b: i64,
-    pub client: ClientAsync<Self, AddTwoInts::Service>,
+    pub client: ClientSync<AddTwoInts::Service>,
 }
 
 impl Data for MyData {
@@ -13,23 +13,11 @@ impl Data for MyData {
         //
         self.a = 0;
         self.b = 0;
-        self.client = node.create_client::<AddTwoInts::Service>(
-            "/add",
-            QosProfile::default(),
-            client_callback,
-        )?;
+        self.client =
+            node.create_client_sync::<AddTwoInts::Service>("/add", QosProfile::default())?;
 
         Ok(())
     }
-}
-
-fn client_callback(
-    _: Arc<Mutex<r2r::Node>>,
-    _: Arc<Mutex<MyData>>,
-    response: &AddTwoInts::Response,
-) -> Result<()> {
-    println!("response: {:?}", response);
-    Ok(())
 }
 
 fn timer_callback(_: Arc<Mutex<r2r::Node>>, data_mutex: Arc<Mutex<MyData>>) -> Result<()> {
@@ -39,7 +27,9 @@ fn timer_callback(_: Arc<Mutex<r2r::Node>>, data_mutex: Arc<Mutex<MyData>>) -> R
         a: data.a,
         b: data.b,
     };
-    data.client.call(request)?;
+    println!("resquest: {:?}", request);
+    // let response = data.client.call(request)?;
+    // println!("response: {:?}", response);
 
     data.a += 1;
     data.b += 2;

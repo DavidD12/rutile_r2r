@@ -24,7 +24,7 @@ impl MainData {
 
 #[derive(Default)]
 pub struct SubData {
-    pub client: Client<Self, AddTwoInts::Service>,
+    pub client: ClientAsync<Self, AddTwoInts::Service>,
 }
 
 impl SubData {

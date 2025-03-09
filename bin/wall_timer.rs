@@ -3,10 +3,15 @@ use rutile::*;
 #[derive(Default)]
 pub struct MyData {
     count: i32,
+    pub period: u64,
 }
 
 impl Data for MyData {
-    fn initialize(&mut self, _: &Node<Self>) -> Result<()> {
+    fn initialize(&mut self, node: &Node<Self>) -> Result<()> {
+        let period: i64 = node.get_parameter_with_default("period", 1000)?;
+        // let array: Vec<String> = node.get_parameter_with_default("list", vec![])?;
+
+        self.period = period as u64;
         Ok(())
     }
 }
@@ -21,9 +26,14 @@ fn timer_callback(_: Arc<Mutex<r2r::Node>>, data_mutex: Arc<Mutex<MyData>>) -> R
 }
 
 fn main() -> Result<()> {
-    let mut node = Node::create("wall_timer_node", "")?;
-
-    node.create_wall_timer(std::time::Duration::from_millis(1000), timer_callback)?;
+    let mut node: Node<MyData> = Node::create("wall_timer_node", "")?;
+    {
+        let data = node.data_mutex.lock().unwrap();
+        node.create_wall_timer(
+            std::time::Duration::from_millis(data.period),
+            timer_callback,
+        )?;
+    }
 
     node.spin();
 
