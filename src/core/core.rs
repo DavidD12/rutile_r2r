@@ -241,6 +241,10 @@ impl Core {
 }
 
 impl NodeInterface for Arc<Mutex<Core>> {
+    fn now(&self) -> Result<std::time::Duration> {
+        Core::now(self.clone())
+    }
+
     fn logger(&self) -> String {
         Core::logger(self.clone())
     }

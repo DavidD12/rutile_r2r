@@ -2,6 +2,8 @@ use super::*;
 use std::sync::{Arc, Mutex};
 
 pub trait NodeInterface {
+    fn now(&self) -> Result<std::time::Duration>;
+
     fn logger(&self) -> String;
 
     fn get_parameter<P>(&self, name: &str) -> r2r::Result<P>
