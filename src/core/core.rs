@@ -10,6 +10,14 @@ pub struct Core {
 }
 
 impl Core {
+    pub fn now(self_mutex: Arc<Mutex<Self>>) -> Result<std::time::Duration> {
+        let this = self_mutex.lock().unwrap();
+        let mutex = this.r2r_node.get_ros_clock();
+        let mut clock = mutex.lock().unwrap();
+        let t = clock.get_now()?;
+        Ok(t)
+    }
+
     pub fn logger(self_mutex: Arc<Mutex<Self>>) -> String {
         let this = self_mutex.lock().unwrap();
         this.r2r_node.logger().to_string()
