@@ -14,6 +14,7 @@ IDL_PACKAGE_FILTER = "std_msgs,example_interfaces"
 [dependencies]
 futures = { version = "0.3.31", features = ["thread-pool"] }
 r2r = "0.9.4"
+rand = "0.9.0"
 
 [lib]
 name = "rutile"
@@ -54,3 +55,19 @@ path = "bin/client.rs"
 [[bin]]
 name = "async"
 path = "bin/async.rs"
+
+[[bin]]
+name = "future_publisher"
+path = "bin/future_publisher.rs"
+
+[[bin]]
+name = "future_subscriber"
+path = "bin/future_subscriber.rs"
+
+[[bin]]
+name = "future_service"
+path = "bin/future_service.rs"
+
+[[bin]]
+name = "future_client"
+path = "bin/future_client.rs"

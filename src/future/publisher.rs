@@ -7,7 +7,7 @@ where
 {
     Empty,
     Defined {
-        r2r_publisher: Arc<r2r::Publisher<M>>,
+        r2r_publisher: SyncMutex<r2r::Publisher<M>>,
     },
 }
 
@@ -28,7 +28,7 @@ where
         match self {
             Publisher::Empty => Err("publisher not initialized".to_string().into()),
             Publisher::Defined { r2r_publisher } => {
-                r2r_publisher.publish(msg)?;
+                r2r_publisher.lock().unwrap().publish(msg)?;
                 Ok(())
             }
         }
