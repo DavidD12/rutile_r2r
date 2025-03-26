@@ -1,6 +1,6 @@
 [package]
 name = "rutile_r2r"
-version = "0.2.9"
+version = "0.3.1"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
@@ -53,8 +53,8 @@ path = "bin/client.rs"
 # path = "bin/core_node.rs"
 
 [[bin]]
-name = "async"
-path = "bin/async.rs"
+name = "future_client_unlock"
+path = "bin/future_client_unlock.rs"
 
 [[bin]]
 name = "future_publisher"
