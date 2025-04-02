@@ -7,6 +7,7 @@ where
 {
     Empty,
     Defined {
+        logger: String,
         r2r_publisher: SyncMutex<r2r::Publisher<M>>,
     },
 }
@@ -24,12 +25,18 @@ impl<M> Publisher<M>
 where
     M: r2r::WrappedTypesupport + 'static,
 {
-    pub fn publish(&self, msg: &M) -> Result<()> {
+    pub fn publish(&self, msg: &M) {
         match self {
-            Publisher::Empty => Err("publisher not initialized".to_string().into()),
-            Publisher::Defined { r2r_publisher } => {
-                r2r_publisher.lock().unwrap().publish(msg)?;
-                Ok(())
+            Publisher::Empty => {
+                r2r::log_error!("", "publisher not initialized");
+            }
+            Publisher::Defined {
+                logger,
+                r2r_publisher,
+            } => {
+                if let Err(e) = r2r_publisher.lock().unwrap().publish(msg) {
+                    r2r::log_error!(logger, "{}", e);
+                }
             }
         }
     }

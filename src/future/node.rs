@@ -210,9 +210,13 @@ impl Node {
     where
         M: r2r::WrappedTypesupport,
     {
+        let logger = self.logger();
         let mut r2r_node = self.r2r_node.lock().unwrap();
         let r2r_publisher = SyncMutex::create(r2r_node.create_publisher(topic, qos_profile)?);
-        Ok(Publisher::Defined { r2r_publisher })
+        Ok(Publisher::Defined {
+            logger,
+            r2r_publisher,
+        })
     }
 
     //-------------------------------------------------- Subscriber --------------------------------------------------
