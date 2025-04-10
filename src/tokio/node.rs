@@ -1,24 +1,23 @@
 use super::*;
-use futures::{StreamExt, executor::ThreadPool, task::SpawnExt};
+use futures::StreamExt;
+use tokio::task;
 
 pub struct Node {
-    r2r_node: SyncMutex<r2r::Node>,
-    pool: ThreadPool,
+    r2r_node: SMutex<r2r::Node>,
 }
 
 impl Node {
     pub fn create(name: &str, namespace: &str) -> Result<Self> {
         let ctx = r2r::Context::create()?;
-        let r2r_node = SyncMutex::create(r2r::Node::create(ctx, name, namespace)?);
-        let pool = ThreadPool::new()?;
+        let r2r_node = SMutex::create(r2r::Node::create(ctx, name, namespace)?);
         //
-        let node = Self { r2r_node, pool };
+        let node = Self { r2r_node };
         Ok(node)
     }
 
     //-------------------------------------------------- R2R --------------------------------------------------
 
-    pub fn r2r(&self) -> SyncMutex<r2r::Node> {
+    pub fn r2r(&self) -> SMutex<r2r::Node> {
         self.r2r_node.clone()
     }
 
@@ -69,7 +68,8 @@ impl Node {
     {
         let logger = self.logger();
         let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
-        self.pool.spawn(async move {
+
+        task::spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -80,7 +80,7 @@ impl Node {
                     }
                 }
             }
-        })?;
+        });
 
         Ok(())
     }
@@ -100,7 +100,8 @@ impl Node {
     {
         let logger = self.logger();
         let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
-        self.pool.spawn(async move {
+
+        task::spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -111,7 +112,7 @@ impl Node {
                     }
                 }
             }
-        })?;
+        });
 
         Ok(())
     }
@@ -131,24 +132,21 @@ impl Node {
         R: Future<Output = ()>,
         R: Send,
     {
-        let r2r_node = self.r2r_node.clone();
+        let logger = self.logger();
         let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
-        self.pool.spawn(async move {
+
+        task::spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
                         callback(data1.clone(), data2.clone()).await;
                     }
                     Err(e) => {
-                        r2r::log_error!(
-                            r2r_node.lock().unwrap().logger(),
-                            "timer execution error: {}",
-                            e
-                        )
+                        r2r::log_error!(&logger, "timer execution error: {}", e)
                     }
                 }
             }
-        })?;
+        });
 
         Ok(())
     }
@@ -172,7 +170,8 @@ impl Node {
     {
         let logger = self.logger();
         let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
-        self.pool.spawn(async move {
+
+        task::spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -183,7 +182,7 @@ impl Node {
                     }
                 }
             }
-        })?;
+        });
 
         Ok(())
     }
@@ -200,7 +199,7 @@ impl Node {
     {
         let logger = self.logger();
         let mut r2r_node = self.r2r_node.lock().unwrap();
-        let r2r_publisher = SyncMutex::create(r2r_node.create_publisher(topic, qos_profile)?);
+        let r2r_publisher = SMutex::create(r2r_node.create_publisher(topic, qos_profile)?);
         Ok(Publisher::Defined {
             logger,
             r2r_publisher,
@@ -227,8 +226,7 @@ impl Node {
             .lock()
             .unwrap()
             .subscribe::<M>(topic, qos_profile)?;
-        self.pool
-            .spawn(async move { subscription.for_each(|msg| callback(msg)).await })?;
+        task::spawn(async move { subscription.for_each(|msg| callback(msg)).await });
         Ok(())
     }
 
@@ -252,11 +250,11 @@ impl Node {
             .lock()
             .unwrap()
             .subscribe::<M>(topic, qos_profile)?;
-        self.pool.spawn(async move {
+        task::spawn(async move {
             subscription
                 .for_each(|msg| callback(data.clone(), msg))
                 .await
-        })?;
+        });
         Ok(())
     }
 
@@ -282,11 +280,11 @@ impl Node {
             .lock()
             .unwrap()
             .subscribe::<M>(topic, qos_profile)?;
-        self.pool.spawn(async move {
+        task::spawn(async move {
             subscription
                 .for_each(|msg| callback(data1.clone(), data2.clone(), msg))
                 .await
-        })?;
+        });
         Ok(())
     }
 
@@ -314,11 +312,11 @@ impl Node {
             .lock()
             .unwrap()
             .subscribe::<M>(topic, qos_profile)?;
-        self.pool.spawn(async move {
+        task::spawn(async move {
             subscription
                 .for_each(|msg| callback(data1.clone(), data2.clone(), data3.clone(), msg))
                 .await
-        })?;
+        });
         Ok(())
     }
 
@@ -345,7 +343,7 @@ impl Node {
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
-        self.pool.spawn(async move {
+        task::spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -362,7 +360,7 @@ impl Node {
                     None => break,
                 }
             }
-        })?;
+        });
         //
         Ok(())
     }
@@ -390,7 +388,7 @@ impl Node {
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
-        self.pool.spawn(async move {
+        task::spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -407,7 +405,7 @@ impl Node {
                     None => break,
                 }
             }
-        })?;
+        });
         //
         Ok(())
     }
@@ -437,7 +435,7 @@ impl Node {
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
-        self.pool.spawn(async move {
+        task::spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -455,7 +453,7 @@ impl Node {
                     None => break,
                 }
             }
-        })?;
+        });
         //
         Ok(())
     }
@@ -487,7 +485,7 @@ impl Node {
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
-        self.pool.spawn(async move {
+        task::spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -510,7 +508,7 @@ impl Node {
                     None => break,
                 }
             }
-        })?;
+        });
         //
         Ok(())
     }
@@ -539,13 +537,15 @@ impl Node {
     //-------------------------------------------------- Spin --------------------------------------------------
 
     pub fn spin(&mut self) {
-        loop {
-            {
-                self.r2r_node
+        let mutex = self.r2r_node.clone();
+        let handle = std::thread::spawn(move || {
+            loop {
+                mutex
                     .lock()
                     .unwrap()
-                    .spin_once(std::time::Duration::from_millis(10_000));
+                    .spin_once(std::time::Duration::from_millis(100));
             }
-        }
+        });
+        handle.join().unwrap();
     }
 }

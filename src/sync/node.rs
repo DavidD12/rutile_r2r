@@ -1,6 +1,7 @@
-pub use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
-pub use super::*;
+use super::*;
+use crate::Result;
 use futures::executor::{LocalPool, LocalSpawner};
 use futures::task::LocalSpawnExt;
 use futures::{StreamExt, future};

@@ -1,7 +1,8 @@
-pub use super::*;
+use crate::Result;
 use futures::channel::oneshot;
 use futures::executor::LocalPool;
 use futures::{executor::LocalSpawner, task::LocalSpawnExt};
+use std::sync::{Arc, Mutex};
 
 pub enum ClientSync<S>
 where

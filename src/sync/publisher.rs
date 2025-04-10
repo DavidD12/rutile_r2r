@@ -1,5 +1,4 @@
-use super::*;
-
+use crate::Result;
 pub enum Publisher<M>
 where
     M: r2r::WrappedTypesupport,

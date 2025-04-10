@@ -1,6 +1,6 @@
 [package]
 name = "rutile_r2r"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
@@ -8,41 +8,45 @@ description = "Simple ROS2 r2r binding"
 repository = "https://github.com/DavidD12/rutile_r2r"
 keywords = ["RSO2", "r2r"]
 
-[env]
-IDL_PACKAGE_FILTER = "std_msgs,example_interfaces"
+# [env]
+# IDL_PACKAGE_FILTER = "std_msgs,example_interfaces"
 
 [dependencies]
 futures = { version = "0.3.31", features = ["thread-pool"] }
 r2r = "0.9.4"
 rand = "0.9.0"
+tokio = { version = "1.44.2", features = ["full"] }
 
 [lib]
 name = "rutile"
 path = "src/lib.rs"
 
+
 [[bin]]
 name = "main"
 path = "bin/main.rs"
 
-[[bin]]
-name = "wall_timer"
-path = "bin/wall_timer.rs"
+#---------- Sync ----------
 
 [[bin]]
-name = "publisher"
-path = "bin/publisher.rs"
+name = "sync_wall_timer"
+path = "bin/sync_wall_timer.rs"
 
 [[bin]]
-name = "subscriber"
-path = "bin/subscriber.rs"
+name = "sync_publisher"
+path = "bin/sync_publisher.rs"
 
 [[bin]]
-name = "service"
-path = "bin/service.rs"
+name = "sync_subscriber"
+path = "bin/sync_subscriber.rs"
 
 [[bin]]
-name = "client"
-path = "bin/client.rs"
+name = "sync_service"
+path = "bin/sync_service.rs"
+
+[[bin]]
+name = "sync_client"
+path = "bin/sync_client.rs"
 
 # [[bin]]
 # name = "client_sync"
@@ -51,6 +55,8 @@ path = "bin/client.rs"
 # [[bin]]
 # name = "core_node"
 # path = "bin/core_node.rs"
+
+#---------- Futrure ----------
 
 [[bin]]
 name = "future_client_unlock"
@@ -71,3 +77,21 @@ path = "bin/future_service.rs"
 [[bin]]
 name = "future_client"
 path = "bin/future_client.rs"
+
+#---------- Tokio ----------
+
+[[bin]]
+name = "tokio_publisher"
+path = "bin/tokio_publisher.rs"
+
+[[bin]]
+name = "tokio_subscriber"
+path = "bin/tokio_subscriber.rs"
+
+[[bin]]
+name = "tokio_service"
+path = "bin/tokio_service.rs"
+
+[[bin]]
+name = "tokio_client"
+path = "bin/tokio_client.rs"

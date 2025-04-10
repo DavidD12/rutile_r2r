@@ -1,5 +1,8 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
-use rutile::*;
+use rutile::Result;
+use rutile::sync::*;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 #[derive(Default)]
 pub struct MyData {}
