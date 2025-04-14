@@ -1,5 +1,5 @@
 use r2r::QosProfile;
-use rutile::tokio::*;
+use rutile::*;
 
 async fn topic_callback(message: r2r::std_msgs::msg::String) {
     println!("I heard: '{:?}'", message);

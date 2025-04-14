@@ -1,5 +1,5 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
-use rutile::tokio::*;
+use rutile::*;
 
 async fn add(request: AddTwoInts::Request) -> AddTwoInts::Response {
     println!("request: '{:?}'", request);
