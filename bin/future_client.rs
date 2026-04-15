@@ -1,12 +1,12 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
-use rutile::future::*;
+use rutile_r2r::future::*;
 
 pub struct Data {
     pub count: i64,
     pub client: Client<AddTwoInts::Service>,
 }
 
-async fn timer_callback(data_mutex: FutureMutex<Data>) {
+async fn timer_callback(data_mutex: FMutex<Data>) {
     let mut data = data_mutex.lock().await;
 
     let request = AddTwoInts::Request {
@@ -25,7 +25,7 @@ fn main() -> Result<()> {
         count: 0,
         client: node.create_client("add_two_ints", QosProfile::default())?,
     };
-    let data_mutex = FutureMutex::create(data);
+    let data_mutex = FMutex::create(data);
     //
     node.create_wall_timer_1(
         std::time::Duration::from_secs(1),

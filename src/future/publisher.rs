@@ -1,5 +1,3 @@
-use super::*;
-
 #[derive(Clone)]
 pub enum Publisher<M>
 where
@@ -8,7 +6,7 @@ where
     Empty,
     Defined {
         logger: String,
-        r2r_publisher: SyncMutex<r2r::Publisher<M>>,
+        r2r_publisher: crate::SMutex<r2r::Publisher<M>>,
     },
 }
 

@@ -1,5 +1,5 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
-use rutile::future::*;
+use rutile_r2r::future::*;
 
 #[derive(Default, Clone)]
 pub struct MyData {
@@ -20,37 +20,34 @@ impl MyData {
     }
 }
 
-async fn client_timer_callback(data: FutureMutex<MyData>, ros: Ros) {
+async fn client_timer_callback(data: FMutex<MyData>, ros: Ros) {
     println!("-------------------------");
     let request = AddTwoInts::Request {
         a: data.lock().await.i,
         b: 1,
     };
     println!("request: {:?}", request);
-    let response = ros.client.call(request).await.unwrap();
-    println!("response: {:?}", response);
-    data.lock().await.i = response.sum;
+    //
+    // let response = ros.client.call(request).await.unwrap();
+    // println!("response: {:?}", response);
+    // data.lock().await.i = response.sum;
+    //
+    let response = match ros.client.call(request).await {
+        Ok(response) => response,
+        Err(e) => {
+            eprintln!("error: {:?}", e);
+            return;
+        }
+    };
+    data.lock().await.i = response.sum
 }
-
-// async fn client_timer_callback(data: FutureMutex<MyData>, ros: Ros) -> Result<()> {
-//     let mut data = data.lock().await;
-//     //
-//     println!("-------------------------");
-//     let request = AddTwoInts::Request { a: data.i, b: 1 };
-//     println!("request: {:?}", request);
-//     let response = ros.client.call(request).await?;
-//     println!("response: {:?}", response);
-//     data.i = response.sum;
-//     //
-//     Ok(())
-// }
 
 #[derive(Clone)]
 pub struct Ros {
     pub client: Client<AddTwoInts::Service>,
 }
 
-async fn timer_callback(data: FutureMutex<MyData>) {
+async fn timer_callback(data: FMutex<MyData>) {
     println!("-------------------------");
     let i = { data.lock().await.i };
     println!("hello: {}", i);
@@ -59,7 +56,7 @@ async fn timer_callback(data: FutureMutex<MyData>) {
 fn main() -> Result<()> {
     //
     let data = MyData::new(10);
-    let data_mutex = FutureMutex::create(data);
+    let data_mutex = FMutex::create(data);
     //
     let mut node = Node::create("async_core", "")?;
     //

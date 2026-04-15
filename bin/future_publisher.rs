@@ -1,5 +1,5 @@
 use r2r::QosProfile;
-use rutile::future::*;
+use rutile_r2r::future::*;
 
 #[derive(Default)]
 pub struct Data {
@@ -7,7 +7,7 @@ pub struct Data {
     pub publisher: Publisher<r2r::std_msgs::msg::String>,
 }
 
-async fn timer_callback(data_mutex: FutureMutex<Data>) {
+async fn timer_callback(data_mutex: FMutex<Data>) {
     let mut data = data_mutex.lock().await;
     //
     let message = r2r::std_msgs::msg::String {
@@ -16,7 +16,7 @@ async fn timer_callback(data_mutex: FutureMutex<Data>) {
     println!("Publishing {:?}", message);
     data.count += 1;
     //
-    let _ = data.publisher.publish(&message);
+    data.publisher.publish(&message);
 }
 
 fn main() -> Result<()> {
@@ -27,9 +27,9 @@ fn main() -> Result<()> {
         publisher: node.create_publisher("topic", QosProfile::default())?,
     };
     //
-    let data_mutex = FutureMutex::create(data);
+    let data_mutex = FMutex::create(data);
     //
-    node.create_wall_timer_1(
+    node.create_wall_timer(
         std::time::Duration::from_millis(500),
         timer_callback,
         data_mutex,

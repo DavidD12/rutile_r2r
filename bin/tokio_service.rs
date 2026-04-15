@@ -1,5 +1,5 @@
 use r2r::{QosProfile, example_interfaces::srv::AddTwoInts};
-use rutile::*;
+use rutile_r2r::tokio::*;
 
 async fn add(request: AddTwoInts::Request) -> AddTwoInts::Response {
     println!("request: '{:?}'", request);
@@ -13,7 +13,7 @@ async fn add(request: AddTwoInts::Request) -> AddTwoInts::Response {
 async fn main() -> Result<()> {
     let mut node = Node::create("minimal_service", "")?;
     //
-    node.create_service::<AddTwoInts::Service, _, _>("add_two_ints", QosProfile::default(), add)?;
+    node.create_service_0::<AddTwoInts::Service, _, _>("add_two_ints", QosProfile::default(), add)?;
     //
     node.spin();
     //

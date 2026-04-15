@@ -1,5 +1,5 @@
 use r2r::QosProfile;
-use rutile::*;
+use rutile_r2r::tokio::*;
 
 #[derive(Default)]
 pub struct Data {

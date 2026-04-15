@@ -22,7 +22,7 @@ impl<S> Client<S>
 where
     S: r2r::WrappedServiceTypeSupport + 'static,
 {
-    pub async fn call(&self, request: S::Request) -> Result<S::Response> {
+    pub async fn call(&self, request: S::Request) -> crate::Result<S::Response> {
         match self {
             Client::Empty => Err("service not initialized".to_string().into()),
             Client::Defined { r2r_client } => {

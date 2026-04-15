@@ -1,15 +1,23 @@
-use super::*;
+use std::sync::Arc;
+
+pub use crate::node_api::NodeApi;
+pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
 use futures::{StreamExt, executor::ThreadPool, task::SpawnExt};
 
 pub struct Node {
-    r2r_node: SyncMutex<r2r::Node>,
+    r2r_node: SMutex<r2r::Node>,
     pool: ThreadPool,
 }
 
-impl Node {
-    pub fn create(name: &str, namespace: &str) -> Result<Self> {
+impl NodeApi for Node {
+    type Publisher<M: r2r::WrappedTypesupport> = crate::future::Publisher<M>;
+    type Client<S: r2r::WrappedServiceTypeSupport> = crate::future::Client<S>;
+
+    //-------------------------------------------------- Create --------------------------------------------------
+
+    fn create(name: &str, namespace: &str) -> Result<Self> {
         let ctx = r2r::Context::create()?;
-        let r2r_node = SyncMutex::create(r2r::Node::create(ctx, name, namespace)?);
+        let r2r_node = SMutex::create(r2r::Node::create(ctx, name, namespace)?);
         let pool = ThreadPool::new()?;
         //
         let node = Self { r2r_node, pool };
@@ -18,49 +26,56 @@ impl Node {
 
     //-------------------------------------------------- R2R --------------------------------------------------
 
-    pub fn r2r(&self) -> SyncMutex<r2r::Node> {
+    fn r2r(&self) -> SMutex<r2r::Node> {
         self.r2r_node.clone()
     }
 
     //-------------------------------------------------- Now --------------------------------------------------
 
-    pub fn now(&self) -> crate::Result<std::time::Duration> {
-        let clock = self.r2r_node.lock().unwrap().get_ros_clock();
-        let t = clock.lock().unwrap().get_now()?;
-        Ok(t)
+    fn now(&self) -> std::time::Duration {
+        let node = self.r2r_node.lock_or_log("r2r_node");
+        let ros_clock = node.get_ros_clock();
+        let mut clock = ros_clock.lock_or_log("clock");
+        let now = clock.get_now().unwrap_or_else(|e| {
+            eprintln!("[WARN] get_now() error: {e}");
+            std::time::Duration::from_secs(0)
+        });
+        now
     }
 
     //-------------------------------------------------- Logger --------------------------------------------------
 
-    pub fn logger(&self) -> String {
-        self.r2r_node.lock().unwrap().logger().to_string()
+    fn logger(&self) -> String {
+        let node = self.r2r_node.lock_or_log("r2r_node");
+        node.logger().to_string()
     }
 
     //-------------------------------------------------- Parameter --------------------------------------------------
 
-    pub fn get_parameter<P>(&self, name: &str) -> r2r::Result<P>
+    fn get_parameter<P>(&self, name: &str) -> crate::Result<P>
     where
         r2r::ParameterValue: TryInto<P, Error = r2r::WrongParameterType>,
     {
-        self.r2r_node.lock().unwrap().get_parameter(name)
+        let node = self.r2r_node.lock_err("r2r_node")?;
+        match node.get_parameter(name) {
+            Ok(value) => Ok(value),
+            Err(e) => Err(e.into()),
+        }
     }
 
-    pub fn get_parameter_with_default<P>(&self, name: &str, default: P) -> r2r::Result<P>
+    fn get_parameter_with_default<P>(&self, name: &str, default: P) -> crate::Result<P>
     where
         r2r::ParameterValue: TryInto<Option<P>, Error = r2r::WrongParameterType>,
     {
-        let opt = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .get_parameter::<Option<P>>(name)?;
+        let node = self.r2r_node.lock_err("r2r_node")?;
+        let opt = node.get_parameter::<Option<P>>(name)?;
 
         Ok(opt.unwrap_or(default))
     }
 
     //-------------------------------------------------- Timer --------------------------------------------------
 
-    pub fn create_wall_timer<F, R>(&self, period: std::time::Duration, callback: F) -> Result<()>
+    fn create_wall_timer_0<F, R>(&self, period: std::time::Duration, callback: F) -> Result<()>
     where
         F: Send + 'static,
         F: Fn() -> R,
@@ -68,7 +83,11 @@ impl Node {
         R: Send,
     {
         let logger = self.logger();
-        let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
         self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
@@ -85,7 +104,7 @@ impl Node {
         Ok(())
     }
 
-    pub fn create_wall_timer_1<T, F, R>(
+    fn create_wall_timer_1<T, F, R>(
         &self,
         period: std::time::Duration,
         callback: F,
@@ -99,7 +118,11 @@ impl Node {
         R: Send,
     {
         let logger = self.logger();
-        let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
         self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
@@ -116,12 +139,12 @@ impl Node {
         Ok(())
     }
 
-    pub fn create_wall_timer_2<T1, T2, F, R>(
+    fn create_wall_timer_2<T1, T2, F, R>(
         &self,
         period: std::time::Duration,
         callback: F,
-        data1: T1,
-        data2: T2,
+        data_1: T1,
+        data_2: T2,
     ) -> Result<()>
     where
         T1: Clone + Send + 'static,
@@ -131,52 +154,17 @@ impl Node {
         R: Future<Output = ()>,
         R: Send,
     {
-        let r2r_node = self.r2r_node.clone();
-        let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
-        self.pool.spawn(async move {
-            loop {
-                match timer.tick().await {
-                    Ok(_) => {
-                        callback(data1.clone(), data2.clone()).await;
-                    }
-                    Err(e) => {
-                        r2r::log_error!(
-                            r2r_node.lock().unwrap().logger(),
-                            "timer execution error: {}",
-                            e
-                        )
-                    }
-                }
-            }
-        })?;
-
-        Ok(())
-    }
-
-    pub fn create_wall_timer_3<T1, T2, T3, F, R>(
-        &self,
-        period: std::time::Duration,
-        callback: F,
-        data1: T1,
-        data2: T2,
-        data3: T3,
-    ) -> Result<()>
-    where
-        T1: Clone + Send + 'static,
-        T2: Clone + Send + 'static,
-        T3: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T1, T2, T3) -> R,
-        R: Future<Output = ()>,
-        R: Send,
-    {
         let logger = self.logger();
-        let mut timer = self.r2r_node.lock().unwrap().create_wall_timer(period)?;
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
         self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
-                        callback(data1.clone(), data2.clone(), data3.clone()).await;
+                        callback(data_1.clone(), data_2.clone()).await;
                     }
                     Err(e) => {
                         r2r::log_error!(&logger, "timer execution error: {}", e)
@@ -190,18 +178,23 @@ impl Node {
 
     //-------------------------------------------------- Publisher --------------------------------------------------
 
-    pub fn create_publisher<M>(
+    fn create_publisher<M>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
-    ) -> Result<Publisher<M>>
+    ) -> Result<Self::Publisher<M>>
     where
         M: r2r::WrappedTypesupport,
     {
         let logger = self.logger();
-        let mut r2r_node = self.r2r_node.lock().unwrap();
-        let r2r_publisher = SyncMutex::create(r2r_node.create_publisher(topic, qos_profile)?);
-        Ok(Publisher::Defined {
+
+        let r2r_publisher = {
+            let mut r2r_node = self.r2r_node.lock_err("r2r_node")?;
+            let r2_publisher = r2r_node.create_publisher(topic, qos_profile)?;
+            SMutex::create(r2_publisher)
+        };
+
+        Ok(Self::Publisher::Defined {
             logger,
             r2r_publisher,
         })
@@ -209,7 +202,7 @@ impl Node {
 
     //-------------------------------------------------- Subscriber --------------------------------------------------
 
-    pub fn create_subscription<M, F, R>(
+    fn create_subscription_0<M, F, R>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -222,17 +215,18 @@ impl Node {
         R: Future<Output = ()>,
         R: Send,
     {
-        let subscription = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .subscribe::<M>(topic, qos_profile)?;
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
+            subscription
+        };
+
         self.pool
             .spawn(async move { subscription.for_each(|msg| callback(msg)).await })?;
         Ok(())
     }
 
-    pub fn create_subscription_1<M, T, F, R>(
+    fn create_subscription_1<M, T, F, R>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -247,11 +241,12 @@ impl Node {
         R: Future<Output = ()>,
         R: Send,
     {
-        let subscription = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .subscribe::<M>(topic, qos_profile)?;
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
+            subscription
+        };
+
         self.pool.spawn(async move {
             subscription
                 .for_each(|msg| callback(data.clone(), msg))
@@ -260,13 +255,13 @@ impl Node {
         Ok(())
     }
 
-    pub fn create_subscription_2<M, T1, T2, F, R>(
+    fn create_subscription_2<M, T1, T2, F, R>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
         callback: F,
-        data1: T1,
-        data2: T2,
+        data_1: T1,
+        data_2: T2,
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
@@ -277,46 +272,15 @@ impl Node {
         R: Future<Output = ()>,
         R: Send,
     {
-        let subscription = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .subscribe::<M>(topic, qos_profile)?;
-        self.pool.spawn(async move {
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
             subscription
-                .for_each(|msg| callback(data1.clone(), data2.clone(), msg))
-                .await
-        })?;
-        Ok(())
-    }
+        };
 
-    pub fn create_subscription_3<M, T1, T2, T3, F, R>(
-        &self,
-        topic: &str,
-        qos_profile: r2r::QosProfile,
-        callback: F,
-        data1: T1,
-        data2: T2,
-        data3: T3,
-    ) -> Result<()>
-    where
-        M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + Send + Sync + 'static,
-        T2: Clone + Send + Sync + 'static,
-        T3: Clone + Send + Sync + 'static,
-        F: Send + Sync + 'static,
-        F: Fn(T1, T2, T3, M) -> R,
-        R: Future<Output = ()>,
-        R: Send,
-    {
-        let subscription = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .subscribe::<M>(topic, qos_profile)?;
         self.pool.spawn(async move {
             subscription
-                .for_each(|msg| callback(data1.clone(), data2.clone(), data3.clone(), msg))
+                .for_each(|msg| callback(data_1.clone(), data_2.clone(), msg))
                 .await
         })?;
         Ok(())
@@ -324,7 +288,7 @@ impl Node {
 
     //-------------------------------------------------- Service --------------------------------------------------
 
-    pub fn create_service<S, F, R>(
+    fn create_service_0<S, F, R>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -337,11 +301,12 @@ impl Node {
         R: Future<Output = S::Response>,
         R: Send,
     {
-        let mut service = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .create_service::<S>(service_name, qos_profile)?;
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
@@ -367,7 +332,7 @@ impl Node {
         Ok(())
     }
 
-    pub fn create_service_1<S, T, F, R>(
+    fn create_service_1<S, T, F, R>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -412,13 +377,13 @@ impl Node {
         Ok(())
     }
 
-    pub fn create_service_2<S, T1, T2, F, R>(
+    fn create_service_2<S, T1, T2, F, R>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
         callback: F,
-        data1: T1,
-        data2: T2,
+        data_1: T1,
+        data_2: T2,
     ) -> Result<()>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
@@ -442,62 +407,7 @@ impl Node {
                 match service.next().await {
                     Some(request) => {
                         let response =
-                            callback(data1.clone(), data2.clone(), request.message.clone()).await;
-                        if let Err(e) = request.respond(response) {
-                            r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
-                                "service response error (service_name='{}'): {}",
-                                service_name,
-                                e
-                            );
-                        }
-                    }
-                    None => break,
-                }
-            }
-        })?;
-        //
-        Ok(())
-    }
-
-    pub fn create_service_3<S, T1, T2, T3, F, R>(
-        &self,
-        service_name: &str,
-        qos_profile: r2r::QosProfile,
-        callback: F,
-        data1: T1,
-        data2: T2,
-        data3: T3,
-    ) -> Result<()>
-    where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        F: Send + 'static,
-        F: Fn(T1, T2, T3, S::Request) -> R,
-        R: Future<Output = S::Response>,
-        R: Send,
-        T1: Clone + Send + 'static,
-        T2: Clone + Send + 'static,
-        T3: Clone + Send + 'static,
-    {
-        let mut service = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .create_service::<S>(service_name, qos_profile)?;
-        let r2r_node_mutex = self.r2r_node.clone();
-        let service_name = service_name.to_string();
-        //
-        self.pool.spawn(async move {
-            loop {
-                match service.next().await {
-                    Some(request) => {
-                        let response = callback(
-                            data1.clone(),
-                            data2.clone(),
-                            data3.clone(),
-                            request.message.clone(),
-                        )
-                        .await;
+                            callback(data_1.clone(), data_2.clone(), request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
                                 r2r_node_mutex.lock().unwrap().logger(),
@@ -517,20 +427,21 @@ impl Node {
 
     //-------------------------------------------------- Client --------------------------------------------------
 
-    pub fn create_client<S>(
+    fn create_client<S>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
-    ) -> Result<Client<S>>
+    ) -> Result<Self::Client<S>>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
     {
-        let r2r_client = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .create_client::<S>(service_name, qos_profile)?;
-        let client = Client::Defined {
+        let r2r_client = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let r2r_client = node.create_client::<S>(service_name, qos_profile)?;
+            r2r_client
+        };
+
+        let client = Self::Client::Defined {
             r2r_client: Arc::new(r2r_client),
         };
         Ok(client)
@@ -538,13 +449,11 @@ impl Node {
 
     //-------------------------------------------------- Spin --------------------------------------------------
 
-    pub fn spin(&mut self) {
+    fn spin(&mut self) {
         loop {
             {
-                self.r2r_node
-                    .lock()
-                    .unwrap()
-                    .spin_once(std::time::Duration::from_millis(10_000));
+                let mut node = self.r2r_node.lock_or_log("r2r_node");
+                node.spin_once(std::time::Duration::from_millis(10_000));
             }
         }
     }

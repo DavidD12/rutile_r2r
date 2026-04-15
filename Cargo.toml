@@ -1,6 +1,6 @@
 [package]
 name = "rutile_r2r"
-version = "0.4.1"
+version = "0.5.1"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
@@ -18,43 +18,8 @@ rand = "0.9.0"
 tokio = { version = "1.44.2", features = ["full"] }
 
 [lib]
-name = "rutile"
+name = "rutile_r2r"
 path = "src/lib.rs"
-
-
-[[bin]]
-name = "main"
-path = "bin/main.rs"
-
-#---------- Sync ----------
-
-[[bin]]
-name = "sync_wall_timer"
-path = "bin/sync_wall_timer.rs"
-
-[[bin]]
-name = "sync_publisher"
-path = "bin/sync_publisher.rs"
-
-[[bin]]
-name = "sync_subscriber"
-path = "bin/sync_subscriber.rs"
-
-[[bin]]
-name = "sync_service"
-path = "bin/sync_service.rs"
-
-[[bin]]
-name = "sync_client"
-path = "bin/sync_client.rs"
-
-# [[bin]]
-# name = "client_sync"
-# path = "bin/client_sync.rs"
-
-# [[bin]]
-# name = "core_node"
-# path = "bin/core_node.rs"
 
 #---------- Futrure ----------
 
