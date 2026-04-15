@@ -27,11 +27,6 @@ async fn client_timer_callback(data: FMutex<MyData>, ros: Ros) {
         b: 1,
     };
     println!("request: {:?}", request);
-    //
-    // let response = ros.client.call(request).await.unwrap();
-    // println!("response: {:?}", response);
-    // data.lock().await.i = response.sum;
-    //
     let response = match ros.client.call(request).await {
         Ok(response) => response,
         Err(e) => {

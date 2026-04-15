@@ -317,7 +317,9 @@ impl NodeApi for Node {
                         let response = callback(request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e
@@ -347,11 +349,12 @@ impl NodeApi for Node {
         R: Send,
         T: Clone + Send + 'static,
     {
-        let mut service = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .create_service::<S>(service_name, qos_profile)?;
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
@@ -362,7 +365,9 @@ impl NodeApi for Node {
                         let response = callback(data.clone(), request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e
@@ -394,11 +399,12 @@ impl NodeApi for Node {
         T1: Clone + Send + 'static,
         T2: Clone + Send + 'static,
     {
-        let mut service = self
-            .r2r_node
-            .lock()
-            .unwrap()
-            .create_service::<S>(service_name, qos_profile)?;
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
         //
@@ -410,7 +416,9 @@ impl NodeApi for Node {
                             callback(data_1.clone(), data_2.clone(), request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e

@@ -312,7 +312,9 @@ impl NodeApi for Node {
                         let response = callback(request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e
@@ -358,7 +360,9 @@ impl NodeApi for Node {
                         let response = callback(data.clone(), request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e
@@ -407,7 +411,9 @@ impl NodeApi for Node {
                             callback(data1.clone(), data2.clone(), request.message.clone()).await;
                         if let Err(e) = request.respond(response) {
                             r2r::log_error!(
-                                r2r_node_mutex.lock().unwrap().logger(),
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
                                 "service response error (service_name='{}'): {}",
                                 service_name,
                                 e
@@ -454,6 +460,9 @@ impl NodeApi for Node {
                 node.spin_once(std::time::Duration::from_millis(100));
             }
         });
-        handle.join().unwrap();
+        match handle.join() {
+            Ok(_) => (),
+            Err(e) => eprintln!("Error in spin thread: {:?}", e),
+        }
     }
 }

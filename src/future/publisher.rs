@@ -1,3 +1,5 @@
+use crate::MutexLockOrLog;
+
 #[derive(Clone)]
 pub enum Publisher<M>
 where
@@ -32,7 +34,7 @@ where
                 logger,
                 r2r_publisher,
             } => {
-                if let Err(e) = r2r_publisher.lock().unwrap().publish(msg) {
+                if let Err(e) = r2r_publisher.lock_or_log("r2r_publisher").publish(msg) {
                     r2r::log_error!(logger, "{}", e);
                 }
             }
