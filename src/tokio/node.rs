@@ -3,7 +3,6 @@ use std::sync::Arc;
 pub use crate::api::NodeAsync;
 pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
 use futures::StreamExt;
-use r2r::builtin_interfaces::msg::Duration;
 use tokio::task;
 
 pub struct Node {
