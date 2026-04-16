@@ -14,7 +14,7 @@ fn main() -> Result<()> {
     //
     node.create_service_0::<AddTwoInts::Service, _, _>("add_two_ints", QosProfile::default(), add)?;
     //
-    node.spin();
+    node.spin(std::time::Duration::from_millis(10));
     //
     Ok(())
 }

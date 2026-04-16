@@ -457,11 +457,11 @@ impl NodeApi for Node {
 
     //-------------------------------------------------- Spin --------------------------------------------------
 
-    fn spin(&mut self) {
+    fn spin(&mut self, duration: std::time::Duration) {
         loop {
             {
                 let mut node = self.r2r_node.lock_or_log("r2r_node");
-                node.spin_once(std::time::Duration::from_millis(10_000));
+                node.spin_once(duration);
             }
         }
     }

@@ -10,7 +10,7 @@ fn main() -> Result<()> {
     //
     node.create_subscription_0("topic", QosProfile::default(), topic_callback)?;
     //
-    node.spin();
+    node.spin(std::time::Duration::from_millis(10));
     //
     Ok(())
 }

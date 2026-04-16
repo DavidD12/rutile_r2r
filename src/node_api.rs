@@ -237,5 +237,5 @@ pub trait NodeApi: Sized {
     where
         S: 'static + r2r::WrappedServiceTypeSupport;
 
-    fn spin(&mut self);
+    fn spin(&mut self, duration: std::time::Duration);
 }

@@ -57,7 +57,7 @@ async fn main() -> Result<()> {
         data_mutex,
     )?;
     //
-    node.spin();
+    node.spin(std::time::Duration::from_millis(10));
     //
     Ok(())
 }

@@ -72,7 +72,7 @@ fn main() -> Result<()> {
         data_mutex.clone(),
     )?;
 
-    node.spin();
+    node.spin(std::time::Duration::from_millis(10));
 
     Ok(())
 }

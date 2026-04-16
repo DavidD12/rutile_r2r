@@ -3,6 +3,7 @@ use std::sync::Arc;
 pub use crate::node_api::NodeApi;
 pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
 use futures::StreamExt;
+use r2r::builtin_interfaces::msg::Duration;
 use tokio::task;
 
 pub struct Node {
@@ -452,12 +453,12 @@ impl NodeApi for Node {
 
     //-------------------------------------------------- Spin --------------------------------------------------
 
-    fn spin(&mut self) {
+    fn spin(&mut self, duration: std::time::Duration) {
         let mutex = self.r2r_node.clone();
         let handle = std::thread::spawn(move || {
             loop {
                 let mut node = mutex.lock_or_log("r2r_node in spin()");
-                node.spin_once(std::time::Duration::from_millis(100));
+                node.spin_once(duration);
             }
         });
         match handle.join() {
