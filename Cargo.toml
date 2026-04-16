@@ -21,42 +21,82 @@ tokio = { version = "1.44.2", features = ["full"] }
 name = "rutile_r2r"
 path = "src/lib.rs"
 
-#---------- Futrure ----------
+#---------- Future ----------
 
 [[bin]]
 name = "future_client_unlock"
-path = "bin/future_client_unlock.rs"
+path = "example/future/future_client_unlock.rs"
 
 [[bin]]
 name = "future_publisher"
-path = "bin/future_publisher.rs"
+path = "example/future/future_publisher.rs"
 
 [[bin]]
 name = "future_subscriber"
-path = "bin/future_subscriber.rs"
+path = "example/future/future_subscriber.rs"
 
 [[bin]]
 name = "future_service"
-path = "bin/future_service.rs"
+path = "example/future/future_service.rs"
 
 [[bin]]
 name = "future_client"
-path = "bin/future_client.rs"
+path = "example/future/future_client.rs"
+
+#---------- Future Mono ----------
+
+[[bin]]
+name = "future_mono_client_unlock"
+path = "example/future_mono/future_mono_client_unlock.rs"
+
+[[bin]]
+name = "future_mono_publisher"
+path = "example/future_mono/future_mono_publisher.rs"
+
+[[bin]]
+name = "future_mono_subscriber"
+path = "example/future_mono/future_mono_subscriber.rs"
+
+[[bin]]
+name = "future_mono_service"
+path = "example/future_mono/future_mono_service.rs"
+
+[[bin]]
+name = "future_mono_client"
+path = "example/future_mono/future_mono_client.rs"
 
 #---------- Tokio ----------
 
 [[bin]]
 name = "tokio_publisher"
-path = "bin/tokio_publisher.rs"
+path = "example/tokio/tokio_publisher.rs"
 
 [[bin]]
 name = "tokio_subscriber"
-path = "bin/tokio_subscriber.rs"
+path = "example/tokio/tokio_subscriber.rs"
 
 [[bin]]
 name = "tokio_service"
-path = "bin/tokio_service.rs"
+path = "example/tokio/tokio_service.rs"
 
 [[bin]]
 name = "tokio_client"
-path = "bin/tokio_client.rs"
+path = "example/tokio/tokio_client.rs"
+
+#---------- Tokio Mono ----------
+
+[[bin]]
+name = "tokio_mono_publisher"
+path = "example/tokio_mono/tokio_mono_publisher.rs"
+
+[[bin]]
+name = "tokio_mono_subscriber"
+path = "example/tokio_mono/tokio_mono_subscriber.rs"
+
+[[bin]]
+name = "tokio_mono_service"
+path = "example/tokio_mono/tokio_mono_service.rs"
+
+[[bin]]
+name = "tokio_mono_client"
+path = "example/tokio_mono/tokio_mono_client.rs"

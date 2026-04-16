@@ -1,6 +1,6 @@
 use std::future::Future;
 
-pub trait NodeApi: Sized {
+pub trait NodeAsync: Sized {
     type Publisher<M: r2r::WrappedTypesupport>;
     type Client<S: r2r::WrappedServiceTypeSupport>;
 

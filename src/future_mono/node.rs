@@ -1,36 +1,42 @@
+use std::cell::RefCell;
+use std::future::Future;
 use std::sync::Arc;
 
 pub use crate::api::NodeAsync;
 pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
-use futures::{StreamExt, executor::ThreadPool, task::SpawnExt};
+use futures::StreamExt;
+use futures::executor::LocalPool;
+use futures::executor::LocalSpawner;
+use futures::task::LocalSpawnExt;
 
 pub struct Node {
     r2r_node: SMutex<r2r::Node>,
-    pool: ThreadPool,
+    local_pool: RefCell<LocalPool>,
+    local_spawner: LocalSpawner,
 }
 
 impl NodeAsync for Node {
-    type Publisher<M: r2r::WrappedTypesupport> = crate::future::Publisher<M>;
-    type Client<S: r2r::WrappedServiceTypeSupport> = crate::future::Client<S>;
-
-    //-------------------------------------------------- Create --------------------------------------------------
+    type Publisher<M: r2r::WrappedTypesupport> = crate::future_mono::Publisher<M>;
+    type Client<S: r2r::WrappedServiceTypeSupport> = crate::future_mono::Client<S>;
 
     fn create(name: &str, namespace: &str) -> Result<Self> {
         let ctx = r2r::Context::create()?;
         let r2r_node = SMutex::create(r2r::Node::create(ctx, name, namespace)?);
-        let pool = ThreadPool::new()?;
-        //
-        let node = Self { r2r_node, pool };
+
+        let local_pool = LocalPool::new();
+        let local_spawner = local_pool.spawner();
+
+        let node = Self {
+            r2r_node,
+            local_pool: RefCell::new(local_pool),
+            local_spawner,
+        };
         Ok(node)
     }
-
-    //-------------------------------------------------- R2R --------------------------------------------------
 
     fn r2r(&self) -> SMutex<r2r::Node> {
         self.r2r_node.clone()
     }
-
-    //-------------------------------------------------- Now --------------------------------------------------
 
     fn now(&self) -> std::time::Duration {
         let node = self.r2r_node.lock_or_log("r2r_node");
@@ -43,14 +49,10 @@ impl NodeAsync for Node {
         now
     }
 
-    //-------------------------------------------------- Logger --------------------------------------------------
-
     fn logger(&self) -> String {
         let node = self.r2r_node.lock_or_log("r2r_node");
         node.logger().to_string()
     }
-
-    //-------------------------------------------------- Parameter --------------------------------------------------
 
     fn get_parameter<P>(&self, name: &str) -> crate::Result<P>
     where
@@ -73,8 +75,6 @@ impl NodeAsync for Node {
         Ok(opt.unwrap_or(default))
     }
 
-    //-------------------------------------------------- Timer --------------------------------------------------
-
     fn create_wall_timer_0<F, R>(&self, period: std::time::Duration, callback: F) -> Result<()>
     where
         F: Send + 'static,
@@ -88,7 +88,7 @@ impl NodeAsync for Node {
             node.create_wall_timer(period)?
         };
 
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -123,7 +123,7 @@ impl NodeAsync for Node {
             node.create_wall_timer(period)?
         };
 
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -160,7 +160,7 @@ impl NodeAsync for Node {
             node.create_wall_timer(period)?
         };
 
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => {
@@ -175,8 +175,6 @@ impl NodeAsync for Node {
 
         Ok(())
     }
-
-    //-------------------------------------------------- Publisher --------------------------------------------------
 
     fn create_publisher<M>(
         &self,
@@ -200,8 +198,6 @@ impl NodeAsync for Node {
         })
     }
 
-    //-------------------------------------------------- Subscriber --------------------------------------------------
-
     fn create_subscription_0<M, F, R>(
         &self,
         topic: &str,
@@ -221,8 +217,8 @@ impl NodeAsync for Node {
             subscription
         };
 
-        self.pool
-            .spawn(async move { subscription.for_each(|msg| callback(msg)).await })?;
+        self.local_spawner
+            .spawn_local(async move { subscription.for_each(|msg| callback(msg)).await })?;
         Ok(())
     }
 
@@ -247,7 +243,7 @@ impl NodeAsync for Node {
             subscription
         };
 
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             subscription
                 .for_each(|msg| callback(data.clone(), msg))
                 .await
@@ -278,15 +274,13 @@ impl NodeAsync for Node {
             subscription
         };
 
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             subscription
                 .for_each(|msg| callback(data_1.clone(), data_2.clone(), msg))
                 .await
         })?;
         Ok(())
     }
-
-    //-------------------------------------------------- Service --------------------------------------------------
 
     fn create_service_0<S, F, R>(
         &self,
@@ -309,8 +303,7 @@ impl NodeAsync for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        //
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -330,7 +323,7 @@ impl NodeAsync for Node {
                 }
             }
         })?;
-        //
+
         Ok(())
     }
 
@@ -357,8 +350,7 @@ impl NodeAsync for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        //
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -378,7 +370,7 @@ impl NodeAsync for Node {
                 }
             }
         })?;
-        //
+
         Ok(())
     }
 
@@ -407,8 +399,7 @@ impl NodeAsync for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        //
-        self.pool.spawn(async move {
+        self.local_spawner.spawn_local(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -429,11 +420,9 @@ impl NodeAsync for Node {
                 }
             }
         })?;
-        //
+
         Ok(())
     }
-
-    //-------------------------------------------------- Client --------------------------------------------------
 
     fn create_client<S>(
         &self,
@@ -455,14 +444,13 @@ impl NodeAsync for Node {
         Ok(client)
     }
 
-    //-------------------------------------------------- Spin --------------------------------------------------
-
     fn spin(&mut self, duration: std::time::Duration) {
         loop {
             {
                 let mut node = self.r2r_node.lock_or_log("r2r_node");
                 node.spin_once(duration);
             }
+            self.local_pool.get_mut().run_until_stalled();
         }
     }
 }

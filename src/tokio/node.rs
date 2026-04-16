@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-pub use crate::node_api::NodeApi;
+pub use crate::api::NodeAsync;
 pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
 use futures::StreamExt;
 use r2r::builtin_interfaces::msg::Duration;
@@ -10,7 +10,7 @@ pub struct Node {
     r2r_node: SMutex<r2r::Node>,
 }
 
-impl NodeApi for Node {
+impl NodeAsync for Node {
     type Publisher<M: r2r::WrappedTypesupport> = crate::tokio::Publisher<M>;
     type Client<S: r2r::WrappedServiceTypeSupport> = crate::tokio::Client<S>;
 
