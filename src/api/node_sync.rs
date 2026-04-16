@@ -1,4 +1,4 @@
-pub trait NodeAsync: Sized {
+pub trait NodeSync: Sized {
     type Publisher<M: r2r::WrappedTypesupport>;
     type Client<S: r2r::WrappedServiceTypeSupport>;
 
@@ -30,47 +30,34 @@ pub trait NodeAsync: Sized {
 
     //-------------------------------------------------- Timer --------------------------------------------------
 
-    fn create_wall_timer<T, F, R>(
+    fn create_wall_timer<T, F>(
         &self,
         period: std::time::Duration,
         callback: F,
         data: T,
     ) -> crate::Result<()>
     where
-        T: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T) -> R,
-        R: Future<Output = ()>,
-        R: Send,
+        T: Clone + 'static,
+        F: 'static + Fn(T),
     {
-        self.create_wall_timer_1::<T, F, R>(period, callback, data)
+        self.create_wall_timer_1::<T, F>(period, callback, data)
     }
 
-    fn create_wall_timer_0<F, R>(
-        &self,
-        period: std::time::Duration,
-        callback: F,
-    ) -> crate::Result<()>
+    fn create_wall_timer_0<F>(&self, period: std::time::Duration, callback: F) -> crate::Result<()>
     where
-        F: Send + 'static,
-        F: Fn() -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        F: 'static + Fn();
 
-    fn create_wall_timer_1<T, F, R>(
+    fn create_wall_timer_1<T, F>(
         &self,
         period: std::time::Duration,
         callback: F,
         data: T,
     ) -> crate::Result<()>
     where
-        T: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T) -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        T: Clone + 'static,
+        F: 'static + Fn(T);
 
-    fn create_wall_timer_2<T1, T2, F, R>(
+    fn create_wall_timer_2<T1, T2, F>(
         &self,
         period: std::time::Duration,
         callback: F,
@@ -78,12 +65,9 @@ pub trait NodeAsync: Sized {
         data_2: T2,
     ) -> crate::Result<()>
     where
-        T1: Clone + Send + 'static,
-        T2: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T1, T2) -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        T1: Clone + 'static,
+        T2: Clone + 'static,
+        F: 'static + Fn(T1, T2);
 
     //-------------------------------------------------- Publisher --------------------------------------------------
 
@@ -97,7 +81,7 @@ pub trait NodeAsync: Sized {
 
     //-------------------------------------------------- Subscriber --------------------------------------------------
 
-    fn create_subscription<M, T, F, R>(
+    fn create_subscription<M, T, F>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -106,16 +90,13 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T: Clone + Send + Sync + 'static,
-        F: Send + Sync + 'static,
-        F: Fn(T, M) -> R,
-        R: Future<Output = ()>,
-        R: Send,
+        T: Clone + 'static,
+        F: 'static + Fn(T, M),
     {
-        self.create_subscription_1::<M, T, F, R>(topic, qos_profile, callback, data)
+        self.create_subscription_1::<M, T, F>(topic, qos_profile, callback, data)
     }
 
-    fn create_subscription_0<M, F, R>(
+    fn create_subscription_0<M, F>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -123,12 +104,9 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        F: Send + Sync + 'static,
-        F: Fn(M) -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        F: 'static + Fn(M);
 
-    fn create_subscription_1<M, T, F, R>(
+    fn create_subscription_1<M, T, F>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -137,13 +115,10 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T: Clone + Send + Sync + 'static,
-        F: Send + Sync + 'static,
-        F: Fn(T, M) -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        T: Clone + 'static,
+        F: 'static + Fn(T, M);
 
-    fn create_subscription_2<M, T1, T2, F, R>(
+    fn create_subscription_2<M, T1, T2, F>(
         &self,
         topic: &str,
         qos_profile: r2r::QosProfile,
@@ -153,16 +128,13 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + Send + Sync + 'static,
-        T2: Clone + Send + Sync + 'static,
-        F: Send + Sync + 'static,
-        F: Fn(T1, T2, M) -> R,
-        R: Future<Output = ()>,
-        R: Send;
+        T1: Clone + 'static,
+        T2: Clone + 'static,
+        F: 'static + Fn(T1, T2, M);
 
     //-------------------------------------------------- Service --------------------------------------------------
 
-    fn create_service<S, T, F, R>(
+    fn create_service<S, T, F>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -171,16 +143,13 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
-        T: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T, S::Request) -> R,
-        R: Future<Output = S::Response>,
-        R: Send,
+        T: Clone + 'static,
+        F: 'static + Fn(T, S::Request) -> S::Response,
     {
-        self.create_service_1::<S, T, F, R>(service_name, qos_profile, callback, data)
+        self.create_service_1::<S, T, F>(service_name, qos_profile, callback, data)
     }
 
-    fn create_service_0<S, F, R>(
+    fn create_service_0<S, F>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -188,12 +157,9 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
-        F: Send + 'static,
-        F: Fn(S::Request) -> R,
-        R: Future<Output = S::Response>,
-        R: Send;
+        F: 'static + Fn(S::Request) -> S::Response;
 
-    fn create_service_1<S, T, F, R>(
+    fn create_service_1<S, T, F>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -202,13 +168,10 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
-        T: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T, S::Request) -> R,
-        R: Future<Output = S::Response>,
-        R: Send;
+        T: Clone + 'static,
+        F: 'static + Fn(T, S::Request) -> S::Response;
 
-    fn create_service_2<S, T1, T2, F, R>(
+    fn create_service_2<S, T1, T2, F>(
         &self,
         service_name: &str,
         qos_profile: r2r::QosProfile,
@@ -218,12 +181,9 @@ pub trait NodeAsync: Sized {
     ) -> crate::Result<()>
     where
         S: 'static + r2r::WrappedServiceTypeSupport,
-        T1: Clone + Send + 'static,
-        T2: Clone + Send + 'static,
-        F: Send + 'static,
-        F: Fn(T1, T2, S::Request) -> R,
-        R: Future<Output = S::Response>,
-        R: Send;
+        T1: Clone + 'static,
+        T2: Clone + 'static,
+        F: 'static + Fn(T1, T2, S::Request) -> S::Response;
 
     //-------------------------------------------------- Client --------------------------------------------------
 

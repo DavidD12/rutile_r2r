@@ -457,11 +457,11 @@ impl NodeAsync for Node {
 
     //-------------------------------------------------- Spin --------------------------------------------------
 
-    fn spin(&mut self, duration: std::time::Duration) {
+    fn spin(&mut self, timeout: std::time::Duration) {
         loop {
             {
                 let mut node = self.r2r_node.lock_or_log("r2r_node");
-                node.spin_once(duration);
+                node.spin_once(timeout);
             }
         }
     }

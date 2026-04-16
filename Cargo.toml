@@ -1,11 +1,12 @@
 [package]
 name = "rutile_r2r"
-version = "0.5.2"
+version = "0.6.1"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
 description = "Simple ROS2 r2r binding"
 repository = "https://github.com/DavidD12/rutile_r2r"
+readme = "README.md"
 keywords = ["ROS2", "r2r"]
 
 # [env]
@@ -21,82 +22,112 @@ tokio = { version = "1.44.2", features = ["full"] }
 name = "rutile_r2r"
 path = "src/lib.rs"
 
+#---------- Mono Sync ----------
+
+[[bin]]
+name = "mono_client_unlock"
+path = "example/mono/client_unlock.rs"
+
+[[bin]]
+name = "mono_publisher"
+path = "example/mono/publisher.rs"
+
+[[bin]]
+name = "mono_subscriber"
+path = "example/mono/subscriber.rs"
+
+[[bin]]
+name = "mono_service"
+path = "example/mono/service.rs"
+
+[[bin]]
+name = "mono_client"
+path = "example/mono/client.rs"
+
+[[bin]]
+name = "mono_client_blocking"
+path = "example/mono/client_blocking.rs"
+
+[[bin]]
+name = "mono_client_callback"
+path = "example/mono/client_callback.rs"
+
 #---------- Future ----------
 
 [[bin]]
 name = "future_client_unlock"
-path = "example/future/future_client_unlock.rs"
+path = "example/future/client_unlock.rs"
 
 [[bin]]
 name = "future_publisher"
-path = "example/future/future_publisher.rs"
+path = "example/future/publisher.rs"
 
 [[bin]]
 name = "future_subscriber"
-path = "example/future/future_subscriber.rs"
+path = "example/future/subscriber.rs"
 
 [[bin]]
 name = "future_service"
-path = "example/future/future_service.rs"
+path = "example/future/service.rs"
 
 [[bin]]
 name = "future_client"
-path = "example/future/future_client.rs"
+path = "example/future/client.rs"
 
 #---------- Future Mono ----------
 
 [[bin]]
 name = "future_mono_client_unlock"
-path = "example/future_mono/future_mono_client_unlock.rs"
+path = "example/future_mono/client_unlock.rs"
 
 [[bin]]
 name = "future_mono_publisher"
-path = "example/future_mono/future_mono_publisher.rs"
+path = "example/future_mono/publisher.rs"
 
 [[bin]]
 name = "future_mono_subscriber"
-path = "example/future_mono/future_mono_subscriber.rs"
+path = "example/future_mono/subscriber.rs"
 
 [[bin]]
 name = "future_mono_service"
-path = "example/future_mono/future_mono_service.rs"
+path = "example/future_mono/service.rs"
 
 [[bin]]
 name = "future_mono_client"
-path = "example/future_mono/future_mono_client.rs"
+path = "example/future_mono/client.rs"
 
 #---------- Tokio ----------
 
 [[bin]]
 name = "tokio_publisher"
-path = "example/tokio/tokio_publisher.rs"
+path = "example/tokio/publisher.rs"
 
 [[bin]]
 name = "tokio_subscriber"
-path = "example/tokio/tokio_subscriber.rs"
+path = "example/tokio/subscriber.rs"
 
 [[bin]]
 name = "tokio_service"
-path = "example/tokio/tokio_service.rs"
+path = "example/tokio/service.rs"
 
 [[bin]]
 name = "tokio_client"
-path = "example/tokio/tokio_client.rs"
+path = "example/tokio/client.rs"
 
 #---------- Tokio Mono ----------
 
 [[bin]]
 name = "tokio_mono_publisher"
-path = "example/tokio_mono/tokio_mono_publisher.rs"
+path = "example/tokio_mono/publisher.rs"
 
 [[bin]]
 name = "tokio_mono_subscriber"
-path = "example/tokio_mono/tokio_mono_subscriber.rs"
+path = "example/tokio_mono/subscriber.rs"
 
 [[bin]]
 name = "tokio_mono_service"
-path = "example/tokio_mono/tokio_mono_service.rs"
+path = "example/tokio_mono/service.rs"
 
 [[bin]]
 name = "tokio_mono_client"
-path = "example/tokio_mono/tokio_mono_client.rs"
+path = "example/tokio_mono/client.rs"

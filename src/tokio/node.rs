@@ -453,12 +453,12 @@ impl NodeAsync for Node {
 
     //-------------------------------------------------- Spin --------------------------------------------------
 
-    fn spin(&mut self, duration: std::time::Duration) {
+    fn spin(&mut self, timeout: std::time::Duration) {
         let mutex = self.r2r_node.clone();
         let handle = std::thread::spawn(move || {
             loop {
                 let mut node = mutex.lock_or_log("r2r_node in spin()");
-                node.spin_once(duration);
+                node.spin_once(timeout);
             }
         });
         match handle.join() {
