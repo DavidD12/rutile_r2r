@@ -1,6 +1,6 @@
 [package]
 name = "rutile_r2r"
-version = "0.6.2"
+version = "0.7.1"
 edition = "2024"
 authors = ["David Doose <david.doose@onera.fr>"]
 license = "LGPL-3.0-only"
@@ -52,6 +52,18 @@ path = "example/mono/client_blocking.rs"
 name = "mono_client_callback"
 path = "example/mono/client_callback.rs"
 
+[[bin]]
+name = "mono_macro_wall_timer"
+path = "example/mono/macro_wall_timer.rs"
+
+[[bin]]
+name = "mono_macro_subscription"
+path = "example/mono/macro_subscription.rs"
+
+[[bin]]
+name = "mono_macro_service"
+path = "example/mono/macro_service.rs"
+
 #---------- Future ----------
 
 [[bin]]
@@ -73,6 +85,18 @@ path = "example/future/service.rs"
 [[bin]]
 name = "future_client"
 path = "example/future/client.rs"
+
+[[bin]]
+name = "future_macro_wall_timer"
+path = "example/future/macro_wall_timer.rs"
+
+[[bin]]
+name = "future_macro_subscription"
+path = "example/future/macro_subscription.rs"
+
+[[bin]]
+name = "future_macro_service"
+path = "example/future/macro_service.rs"
 
 #---------- Future Mono ----------
 
@@ -96,6 +120,18 @@ path = "example/future_mono/service.rs"
 name = "future_mono_client"
 path = "example/future_mono/client.rs"
 
+[[bin]]
+name = "future_mono_macro_wall_timer"
+path = "example/future_mono/macro_wall_timer.rs"
+
+[[bin]]
+name = "future_mono_macro_subscription"
+path = "example/future_mono/macro_subscription.rs"
+
+[[bin]]
+name = "future_mono_macro_service"
+path = "example/future_mono/macro_service.rs"
+
 #---------- Tokio ----------
 
 [[bin]]
@@ -114,6 +150,18 @@ path = "example/tokio/service.rs"
 name = "tokio_client"
 path = "example/tokio/client.rs"
 
+[[bin]]
+name = "tokio_macro_wall_timer"
+path = "example/tokio/macro_wall_timer.rs"
+
+[[bin]]
+name = "tokio_macro_subscription"
+path = "example/tokio/macro_subscription.rs"
+
+[[bin]]
+name = "tokio_macro_service"
+path = "example/tokio/macro_service.rs"
+
 #---------- Tokio Mono ----------
 
 [[bin]]
@@ -131,3 +179,15 @@ path = "example/tokio_mono/service.rs"
 [[bin]]
 name = "tokio_mono_client"
 path = "example/tokio_mono/client.rs"
+
+[[bin]]
+name = "tokio_mono_macro_wall_timer"
+path = "example/tokio_mono/macro_wall_timer.rs"
+
+[[bin]]
+name = "tokio_mono_macro_subscription"
+path = "example/tokio_mono/macro_subscription.rs"
+
+[[bin]]
+name = "tokio_mono_macro_service"
+path = "example/tokio_mono/macro_service.rs"

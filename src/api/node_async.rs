@@ -85,6 +85,63 @@ pub trait NodeAsync: Sized {
         R: Future<Output = ()>,
         R: Send;
 
+    fn create_wall_timer_3<T1, T2, T3, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+    ) -> crate::Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
+    fn create_wall_timer_4<T1, T2, T3, T4, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+    ) -> crate::Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
+    fn create_wall_timer_5<T1, T2, T3, T4, T5, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+        data_5: T5,
+    ) -> crate::Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        T5: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, T5) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
     //-------------------------------------------------- Publisher --------------------------------------------------
 
     fn create_publisher<M>(
@@ -160,6 +217,69 @@ pub trait NodeAsync: Sized {
         R: Future<Output = ()>,
         R: Send;
 
+    fn create_subscription_3<M, T1, T2, T3, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+    ) -> crate::Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, M) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
+    fn create_subscription_4<M, T1, T2, T3, T4, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+    ) -> crate::Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, T4, M) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
+    fn create_subscription_5<M, T1, T2, T3, T4, T5, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+        data_5: T5,
+    ) -> crate::Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        T5: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, T4, T5, M) -> R,
+        R: Future<Output = ()>,
+        R: Send;
+
     //-------------------------------------------------- Service --------------------------------------------------
 
     fn create_service<S, T, F, R>(
@@ -193,6 +313,22 @@ pub trait NodeAsync: Sized {
         R: Future<Output = S::Response>,
         R: Send;
 
+    fn create_service_typed_0<S, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        F: Send + 'static,
+        F: Fn(S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_0::<S, F, R>(service_name, qos_profile, callback)
+    }
+
     fn create_service_1<S, T, F, R>(
         &self,
         service_name: &str,
@@ -207,6 +343,24 @@ pub trait NodeAsync: Sized {
         F: Fn(T, S::Request) -> R,
         R: Future<Output = S::Response>,
         R: Send;
+
+    fn create_service_typed_1<S, T, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data: T,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_1::<S, T, F, R>(service_name, qos_profile, callback, data)
+    }
 
     fn create_service_2<S, T1, T2, F, R>(
         &self,
@@ -224,6 +378,191 @@ pub trait NodeAsync: Sized {
         F: Fn(T1, T2, S::Request) -> R,
         R: Future<Output = S::Response>,
         R: Send;
+
+    fn create_service_typed_2<S, T1, T2, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_2::<S, T1, T2, F, R>(
+            service_name,
+            qos_profile,
+            callback,
+            data_1,
+            data_2,
+        )
+    }
+
+    fn create_service_3<S, T1, T2, T3, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send;
+
+    fn create_service_typed_3<S, T1, T2, T3, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_3::<S, T1, T2, T3, F, R>(
+            service_name,
+            qos_profile,
+            callback,
+            data_1,
+            data_2,
+            data_3,
+        )
+    }
+
+    fn create_service_4<S, T1, T2, T3, T4, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send;
+
+    fn create_service_typed_4<S, T1, T2, T3, T4, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_4::<S, T1, T2, T3, T4, F, R>(
+            service_name,
+            qos_profile,
+            callback,
+            data_1,
+            data_2,
+            data_3,
+            data_4,
+        )
+    }
+
+    fn create_service_5<S, T1, T2, T3, T4, T5, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+        data_5: T5,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        T5: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, T5, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send;
+
+    fn create_service_typed_5<S, T1, T2, T3, T4, T5, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data_1: T1,
+        data_2: T2,
+        data_3: T3,
+        data_4: T4,
+        data_5: T5,
+    ) -> crate::Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        T5: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, T5, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+    {
+        self.create_service_5::<S, T1, T2, T3, T4, T5, F, R>(
+            service_name,
+            qos_profile,
+            callback,
+            data_1,
+            data_2,
+            data_3,
+            data_4,
+            data_5,
+        )
+    }
 
     //-------------------------------------------------- Client --------------------------------------------------
 

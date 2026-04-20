@@ -172,6 +172,136 @@ impl NodeAsync for Node {
         Ok(())
     }
 
+    fn create_wall_timer_3<T1, T2, T3, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+    ) -> Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let logger = self.logger();
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
+        task::spawn(async move {
+            loop {
+                match timer.tick().await {
+                    Ok(_) => {
+                        callback(data1.clone(), data2.clone(), data3.clone()).await;
+                    }
+                    Err(e) => {
+                        r2r::log_error!(&logger, "timer execution error: {}", e)
+                    }
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    fn create_wall_timer_4<T1, T2, T3, T4, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+    ) -> Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let logger = self.logger();
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
+        task::spawn(async move {
+            loop {
+                match timer.tick().await {
+                    Ok(_) => {
+                        callback(data1.clone(), data2.clone(), data3.clone(), data4.clone()).await;
+                    }
+                    Err(e) => {
+                        r2r::log_error!(&logger, "timer execution error: {}", e)
+                    }
+                }
+            }
+        });
+
+        Ok(())
+    }
+
+    fn create_wall_timer_5<T1, T2, T3, T4, T5, F, R>(
+        &self,
+        period: std::time::Duration,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+        data5: T5,
+    ) -> Result<()>
+    where
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        T5: Clone + Send + 'static,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, T5) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let logger = self.logger();
+        let mut timer = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            node.create_wall_timer(period)?
+        };
+
+        task::spawn(async move {
+            loop {
+                match timer.tick().await {
+                    Ok(_) => {
+                        callback(
+                            data1.clone(),
+                            data2.clone(),
+                            data3.clone(),
+                            data4.clone(),
+                            data5.clone(),
+                        )
+                        .await;
+                    }
+                    Err(e) => {
+                        r2r::log_error!(&logger, "timer execution error: {}", e)
+                    }
+                }
+            }
+        });
+
+        Ok(())
+    }
+
     //-------------------------------------------------- Publisher --------------------------------------------------
 
     fn create_publisher<M>(
@@ -276,6 +406,128 @@ impl NodeAsync for Node {
         task::spawn(async move {
             subscription
                 .for_each(|msg| callback(data1.clone(), data2.clone(), msg))
+                .await
+        });
+        Ok(())
+    }
+
+    fn create_subscription_3<M, T1, T2, T3, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+    ) -> Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, M) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
+            subscription
+        };
+
+        task::spawn(async move {
+            subscription
+                .for_each(|msg| callback(data1.clone(), data2.clone(), data3.clone(), msg))
+                .await
+        });
+        Ok(())
+    }
+
+    fn create_subscription_4<M, T1, T2, T3, T4, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+    ) -> Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, T4, M) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
+            subscription
+        };
+
+        task::spawn(async move {
+            subscription
+                .for_each(|msg| {
+                    callback(
+                        data1.clone(),
+                        data2.clone(),
+                        data3.clone(),
+                        data4.clone(),
+                        msg,
+                    )
+                })
+                .await
+        });
+        Ok(())
+    }
+
+    fn create_subscription_5<M, T1, T2, T3, T4, T5, F, R>(
+        &self,
+        topic: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+        data5: T5,
+    ) -> Result<()>
+    where
+        M: Send + 'static + r2r::WrappedTypesupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        T5: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static,
+        F: Fn(T1, T2, T3, T4, T5, M) -> R,
+        R: Future<Output = ()>,
+        R: Send,
+    {
+        let subscription = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let subscription = node.subscribe::<M>(topic, qos_profile)?;
+            subscription
+        };
+
+        task::spawn(async move {
+            subscription
+                .for_each(|msg| {
+                    callback(
+                        data1.clone(),
+                        data2.clone(),
+                        data3.clone(),
+                        data4.clone(),
+                        data5.clone(),
+                        msg,
+                    )
+                })
                 .await
         });
         Ok(())
@@ -425,6 +677,183 @@ impl NodeAsync for Node {
             }
         });
         //
+        Ok(())
+    }
+
+    fn create_service_3<S, T1, T2, T3, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+    ) -> Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+    {
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
+        let r2r_node_mutex = self.r2r_node.clone();
+        let service_name = service_name.to_string();
+        task::spawn(async move {
+            loop {
+                match service.next().await {
+                    Some(request) => {
+                        let response = callback(
+                            data1.clone(),
+                            data2.clone(),
+                            data3.clone(),
+                            request.message.clone(),
+                        )
+                        .await;
+                        if let Err(e) = request.respond(response) {
+                            r2r::log_error!(
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
+                                "service response error (service_name='{}'): {}",
+                                service_name,
+                                e
+                            );
+                        }
+                    }
+                    None => break,
+                }
+            }
+        });
+        Ok(())
+    }
+
+    fn create_service_4<S, T1, T2, T3, T4, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+    ) -> Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+    {
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
+        let r2r_node_mutex = self.r2r_node.clone();
+        let service_name = service_name.to_string();
+        task::spawn(async move {
+            loop {
+                match service.next().await {
+                    Some(request) => {
+                        let response = callback(
+                            data1.clone(),
+                            data2.clone(),
+                            data3.clone(),
+                            data4.clone(),
+                            request.message.clone(),
+                        )
+                        .await;
+                        if let Err(e) = request.respond(response) {
+                            r2r::log_error!(
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
+                                "service response error (service_name='{}'): {}",
+                                service_name,
+                                e
+                            );
+                        }
+                    }
+                    None => break,
+                }
+            }
+        });
+        Ok(())
+    }
+
+    fn create_service_5<S, T1, T2, T3, T4, T5, F, R>(
+        &self,
+        service_name: &str,
+        qos_profile: r2r::QosProfile,
+        callback: F,
+        data1: T1,
+        data2: T2,
+        data3: T3,
+        data4: T4,
+        data5: T5,
+    ) -> Result<()>
+    where
+        S: 'static + r2r::WrappedServiceTypeSupport,
+        F: Send + 'static,
+        F: Fn(T1, T2, T3, T4, T5, S::Request) -> R,
+        R: Future<Output = S::Response>,
+        R: Send,
+        T1: Clone + Send + 'static,
+        T2: Clone + Send + 'static,
+        T3: Clone + Send + 'static,
+        T4: Clone + Send + 'static,
+        T5: Clone + Send + 'static,
+    {
+        let mut service = {
+            let mut node = self.r2r_node.lock_err("r2r_node")?;
+            let service = node.create_service::<S>(service_name, qos_profile)?;
+            service
+        };
+
+        let r2r_node_mutex = self.r2r_node.clone();
+        let service_name = service_name.to_string();
+        task::spawn(async move {
+            loop {
+                match service.next().await {
+                    Some(request) => {
+                        let response = callback(
+                            data1.clone(),
+                            data2.clone(),
+                            data3.clone(),
+                            data4.clone(),
+                            data5.clone(),
+                            request.message.clone(),
+                        )
+                        .await;
+                        if let Err(e) = request.respond(response) {
+                            r2r::log_error!(
+                                r2r_node_mutex
+                                    .lock_or_log("r2r_node.create_service")
+                                    .logger(),
+                                "service response error (service_name='{}'): {}",
+                                service_name,
+                                e
+                            );
+                        }
+                    }
+                    None => break,
+                }
+            }
+        });
         Ok(())
     }
 
