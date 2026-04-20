@@ -6,7 +6,7 @@ pub struct Data {
     pub client: Client<AddTwoInts::Service>,
 }
 
-async fn timer_callback(data_mutex: FMutex<Data>) {
+async fn timer_callback_lock_all(data_mutex: FMutex<Data>) {
     let mut data = data_mutex.lock().await;
 
     let request = AddTwoInts::Request {
@@ -16,6 +16,22 @@ async fn timer_callback(data_mutex: FMutex<Data>) {
     let response = data.client.call(request).await;
     println!("{:?}", response);
     data.count += 1;
+}
+
+pub async fn timer_callback_light(data_mutex: FMutex<Data>) {
+    // 1) short critical section
+    let (client, request) = {
+        let mut data = data_mutex.lock().await;
+        let request = AddTwoInts::Request {
+            a: data.count,
+            b: data.count * 10,
+        };
+        data.count += 1;
+        (data.client.clone(), request)
+    };
+    // 2) async call without holding the lock
+    let response = client.call(request).await;
+    println!("{:?}", response);
 }
 
 fn main() -> Result<()> {
@@ -29,7 +45,7 @@ fn main() -> Result<()> {
     //
     node.create_wall_timer_1(
         std::time::Duration::from_secs(1),
-        timer_callback,
+        timer_callback_lock_all,
         data_mutex,
     )?;
     //

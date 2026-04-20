@@ -7,7 +7,7 @@ pub struct Data {
 }
 
 // Lock All
-async fn timer_callback(data_mutex: TMutex<Data>) {
+async fn timer_callback_lock_all(data_mutex: TMutex<Data>) {
     let mut data = data_mutex.lock().await;
 
     let request = AddTwoInts::Request {
@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
     //
     node.create_wall_timer_1(
         std::time::Duration::from_secs(1),
-        timer_callback,
+        timer_callback_lock_all,
         data_mutex,
     )?;
     //
