@@ -1,4 +1,3 @@
-use crate::MutexLockOrLog;
 use futures::task::SpawnExt;
 use std::future::Future;
 use std::sync::Arc;
@@ -12,7 +11,6 @@ where
     Empty,
     Defined {
         r2r_client: Arc<r2r::Client<S>>,
-        r2r_node: crate::SMutex<r2r::Node>,
         pool: futures::executor::ThreadPool,
     },
 }
@@ -37,7 +35,6 @@ where
             Client::Empty => Err("service not initialized".to_string().into()),
             Client::Defined {
                 r2r_client,
-                r2r_node,
                 ..
             } => {
                 let r2r_client = r2r_client.clone();
@@ -52,10 +49,7 @@ where
                             result?;
                             break;
                         }
-                        Poll::Pending => {
-                            let mut node = r2r_node.lock_or_log("r2r_node in client.call");
-                            node.spin_once(std::time::Duration::from_millis(1));
-                        }
+                        Poll::Pending => std::thread::sleep(std::time::Duration::from_millis(1)),
                     }
                 }
 
@@ -67,10 +61,7 @@ where
                     let mut cx = Context::from_waker(waker);
                     match response_future.as_mut().poll(&mut cx) {
                         Poll::Ready(result) => return result.map_err(|e| e.into()),
-                        Poll::Pending => {
-                            let mut node = r2r_node.lock_or_log("r2r_node in client.call_blocking");
-                            node.spin_once(std::time::Duration::from_millis(1));
-                        }
+                        Poll::Pending => std::thread::sleep(std::time::Duration::from_millis(1)),
                     }
                 }
             }

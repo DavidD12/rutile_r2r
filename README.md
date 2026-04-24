@@ -45,6 +45,15 @@ The `mono` client provides two call modes:
   - non-blocking call
   - callback receives `Result<Response>` when the response arrives
 
+## Multi client calls
+
+The `multi` client provides the same two call modes:
+
+- `call_blocking(request) -> Result<Response>`
+- `call(request, callback) -> Result<()>`
+
+In `multi`, client calls do not call `spin_once()` internally. Make sure a spinner loop is running (for example `node.spin(...)` on the main thread) so ROS2 events keep progressing.
+
 ## Migration (`NodeSync` -> `NodeMono`)
 
 - `NodeSync` has been renamed to `NodeMono`.

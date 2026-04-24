@@ -820,7 +820,6 @@ impl NodeMulti for Node {
 
         Ok(Self::Client::Defined {
             r2r_client: Arc::new(r2r_client),
-            r2r_node: self.r2r_node.clone(),
             pool: self.pool.clone(),
         })
     }
@@ -829,8 +828,9 @@ impl NodeMulti for Node {
         loop {
             {
                 let mut node = self.r2r_node.lock_or_log("r2r_node");
-                node.spin_once(timeout);
+                node.spin_once(std::time::Duration::ZERO);
             }
+            std::thread::sleep(timeout);
         }
     }
 }
