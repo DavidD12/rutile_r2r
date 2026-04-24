@@ -8,7 +8,8 @@ The crate provides multiple execution models:
 - `future_mono`: async API based on `futures` on a single thread
 - `tokio`: async API based on Tokio runtime
 - `tokio_mono`: async API based on Tokio current-thread runtime
-- `mono`: synchronous-style API for single-thread usage (`NodeSync`)
+- `mono`: synchronous-style API for single-thread usage (`NodeMono`)
+- `multi`: synchronous-style API for thread-pool usage (`NodeMulti`)
 
 ## Installation
 
@@ -22,7 +23,8 @@ rutile_r2r = "0.5"
 ## Core APIs
 
 - `NodeAsync` (`src/api/node_async.rs`): async callback-based node trait
-- `NodeSync` (`src/api/node_sync.rs`): synchronous callback-based node trait
+- `NodeMono` (`src/api/node_mono.rs`): synchronous single-thread callback-based node trait
+- `NodeMulti` (`src/api/node_multi.rs`): synchronous multi-thread callback-based node trait
 
 Both APIs provide helpers for:
 
@@ -43,6 +45,13 @@ The `mono` client provides two call modes:
   - non-blocking call
   - callback receives `Result<Response>` when the response arrives
 
+## Migration (`NodeSync` -> `NodeMono`)
+
+- `NodeSync` has been renamed to `NodeMono`.
+- `src/api/node_sync.rs` has been replaced by `src/api/node_mono.rs`.
+- Existing sync implementations now target `NodeMono`.
+- Update imports/usages from `NodeSync` to `NodeMono`.
+
 ## Examples
 
 This repository contains runnable examples under `example/`.
@@ -56,6 +65,15 @@ This repository contains runnable examples under `example/`.
 - `mono_client_unlock`
 - `mono_client_blocking`
 - `mono_client_callback`
+
+### Multi sync
+
+- `multi_publisher`
+- `multi_subscriber`
+- `multi_service`
+- `multi_client`
+- `multi_client_blocking`
+- `multi_client_callback`
 
 ### Future
 

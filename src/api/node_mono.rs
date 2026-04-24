@@ -1,4 +1,4 @@
-pub trait NodeSync: Sized {
+pub trait NodeMono: Sized {
     type Publisher<M: r2r::WrappedTypesupport>;
     type Client<S: r2r::WrappedServiceTypeSupport>;
 

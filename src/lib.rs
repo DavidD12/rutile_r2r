@@ -2,6 +2,7 @@ pub mod api;
 pub mod future;
 pub mod future_mono;
 mod macros;
+pub mod multi;
 pub mod mono;
 pub mod tokio;
 pub mod tokio_mono;

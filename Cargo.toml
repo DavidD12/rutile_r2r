@@ -64,6 +64,32 @@ path = "example/mono/macro_subscription.rs"
 name = "mono_macro_service"
 path = "example/mono/macro_service.rs"
 
+#---------- Multi Sync ----------
+
+[[bin]]
+name = "multi_publisher"
+path = "example/multi/publisher.rs"
+
+[[bin]]
+name = "multi_subscriber"
+path = "example/multi/subscriber.rs"
+
+[[bin]]
+name = "multi_service"
+path = "example/multi/service.rs"
+
+[[bin]]
+name = "multi_client"
+path = "example/multi/client.rs"
+
+[[bin]]
+name = "multi_client_blocking"
+path = "example/multi/client_blocking.rs"
+
+[[bin]]
+name = "multi_client_callback"
+path = "example/multi/client_callback.rs"
+
 #---------- Future ----------
 
 [[bin]]

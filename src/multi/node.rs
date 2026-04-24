@@ -1,33 +1,29 @@
-use std::cell::RefCell;
 use std::sync::Arc;
 
-pub use crate::api::NodeMono;
+pub use crate::api::NodeMulti;
 pub use crate::{MutexCreate, MutexLockErr, MutexLockOrLog, Result, SMutex};
 use futures::StreamExt;
-use futures::executor::{LocalPool, LocalSpawner};
-use futures::task::LocalSpawnExt;
+use futures::executor::ThreadPool;
+use futures::task::SpawnExt;
 
 pub struct Node {
     r2r_node: SMutex<r2r::Node>,
-    local_pool: RefCell<LocalPool>,
-    local_spawner: LocalSpawner,
+    pool: ThreadPool,
 }
 
-impl NodeMono for Node {
-    type Publisher<M: r2r::WrappedTypesupport> = crate::mono::Publisher<M>;
-    type Client<S: r2r::WrappedServiceTypeSupport> = crate::mono::Client<S>;
+impl NodeMulti for Node {
+    type Publisher<M: r2r::WrappedTypesupport> = crate::multi::Publisher<M>;
+    type Client<S: r2r::WrappedServiceTypeSupport> = crate::multi::Client<S>;
 
     fn create(name: &str, namespace: &str) -> Result<Self> {
         let ctx = r2r::Context::create()?;
         let r2r_node = SMutex::create(r2r::Node::create(ctx, name, namespace)?);
 
-        let local_pool = LocalPool::new();
-        let local_spawner = local_pool.spawner();
+        let pool = ThreadPool::new()?;
 
         let node = Self {
             r2r_node,
-            local_pool: RefCell::new(local_pool),
-            local_spawner,
+            pool,
         };
         Ok(node)
     }
@@ -74,7 +70,7 @@ impl NodeMono for Node {
 
     fn create_wall_timer_0<F>(&self, period: std::time::Duration, callback: F) -> Result<()>
     where
-        F: 'static + Fn(),
+        F: Send + Sync + 'static + Fn(),
     {
         let logger = self.logger();
         let mut timer = {
@@ -82,7 +78,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(),
@@ -103,8 +99,8 @@ impl NodeMono for Node {
         data: T,
     ) -> Result<()>
     where
-        T: Clone + 'static,
-        F: 'static + Fn(T),
+        T: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T),
     {
         let logger = self.logger();
         let mut timer = {
@@ -112,7 +108,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(data.clone()),
@@ -134,9 +130,9 @@ impl NodeMono for Node {
         data_2: T2,
     ) -> Result<()>
     where
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        F: 'static + Fn(T1, T2),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2),
     {
         let logger = self.logger();
         let mut timer = {
@@ -144,7 +140,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(data_1.clone(), data_2.clone()),
@@ -167,10 +163,10 @@ impl NodeMono for Node {
         data_3: T3,
     ) -> Result<()>
     where
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3),
     {
         let logger = self.logger();
         let mut timer = {
@@ -178,7 +174,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(data_1.clone(), data_2.clone(), data_3.clone()),
@@ -202,11 +198,11 @@ impl NodeMono for Node {
         data_4: T4,
     ) -> Result<()>
     where
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4),
     {
         let logger = self.logger();
         let mut timer = {
@@ -214,7 +210,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(
@@ -244,12 +240,12 @@ impl NodeMono for Node {
         data_5: T5,
     ) -> Result<()>
     where
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        T5: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4, T5),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        T5: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4, T5),
     {
         let logger = self.logger();
         let mut timer = {
@@ -257,7 +253,7 @@ impl NodeMono for Node {
             node.create_wall_timer(period)?
         };
 
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match timer.tick().await {
                     Ok(_) => callback(
@@ -307,7 +303,7 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        F: 'static + Fn(M),
+        F: Send + Sync + 'static + Fn(M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -315,7 +311,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -337,8 +333,8 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T: Clone + 'static,
-        F: 'static + Fn(T, M),
+        T: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T, M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -346,7 +342,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -370,9 +366,9 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        F: 'static + Fn(T1, T2, M),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -380,7 +376,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -406,10 +402,10 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, M),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -417,7 +413,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -445,11 +441,11 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4, M),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4, M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -457,7 +453,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -487,12 +483,12 @@ impl NodeMono for Node {
     ) -> Result<()>
     where
         M: Send + 'static + r2r::WrappedTypesupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        T5: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4, T5, M),
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        T5: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4, T5, M),
     {
         let subscription = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -500,7 +496,7 @@ impl NodeMono for Node {
         };
 
         let callback = Arc::new(callback);
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             subscription
                 .for_each(move |msg| {
                     let callback = callback.clone();
@@ -525,8 +521,8 @@ impl NodeMono for Node {
         callback: F,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        F: 'static + Fn(S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        F: Send + Sync + 'static + Fn(S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -535,7 +531,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -566,9 +562,9 @@ impl NodeMono for Node {
         data: T,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        T: Clone + 'static,
-        F: 'static + Fn(T, S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        T: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T, S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -577,7 +573,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -609,10 +605,10 @@ impl NodeMono for Node {
         data_2: T2,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        F: 'static + Fn(T1, T2, S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -621,7 +617,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -655,11 +651,11 @@ impl NodeMono for Node {
         data_3: T3,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -668,7 +664,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -707,12 +703,12 @@ impl NodeMono for Node {
         data_4: T4,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4, S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4, S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -721,7 +717,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -762,13 +758,13 @@ impl NodeMono for Node {
         data_5: T5,
     ) -> Result<()>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
-        T1: Clone + 'static,
-        T2: Clone + 'static,
-        T3: Clone + 'static,
-        T4: Clone + 'static,
-        T5: Clone + 'static,
-        F: 'static + Fn(T1, T2, T3, T4, T5, S::Request) -> S::Response,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        T1: Clone + Send + Sync + 'static,
+        T2: Clone + Send + Sync + 'static,
+        T3: Clone + Send + Sync + 'static,
+        T4: Clone + Send + Sync + 'static,
+        T5: Clone + Send + Sync + 'static,
+        F: Send + Sync + 'static + Fn(T1, T2, T3, T4, T5, S::Request) -> S::Response,
     {
         let mut service = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -777,7 +773,7 @@ impl NodeMono for Node {
 
         let r2r_node_mutex = self.r2r_node.clone();
         let service_name = service_name.to_string();
-        self.local_spawner.spawn_local(async move {
+        self.pool.spawn(async move {
             loop {
                 match service.next().await {
                     Some(request) => {
@@ -813,7 +809,9 @@ impl NodeMono for Node {
         qos_profile: r2r::QosProfile,
     ) -> Result<Self::Client<S>>
     where
-        S: 'static + r2r::WrappedServiceTypeSupport,
+        S: 'static + Send + Sync + r2r::WrappedServiceTypeSupport,
+        S::Request: Send + Sync + 'static,
+        S::Response: Send + 'static,
     {
         let r2r_client = {
             let mut node = self.r2r_node.lock_err("r2r_node")?;
@@ -823,7 +821,7 @@ impl NodeMono for Node {
         Ok(Self::Client::Defined {
             r2r_client: Arc::new(r2r_client),
             r2r_node: self.r2r_node.clone(),
-            local_spawner: self.local_spawner.clone(),
+            pool: self.pool.clone(),
         })
     }
 
@@ -833,7 +831,6 @@ impl NodeMono for Node {
                 let mut node = self.r2r_node.lock_or_log("r2r_node");
                 node.spin_once(timeout);
             }
-            self.local_pool.get_mut().run_until_stalled();
         }
     }
 }
